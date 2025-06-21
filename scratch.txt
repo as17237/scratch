@@ -1,3296 +1,748 @@
-----------------custom_components-------------------------------
+-----------------api_clients----------------------------
+import requests
 import streamlit as st
 import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import json
 
-# Page configuration
-st.set_page_config(page_title="Custom Components", page_icon="🧩", layout="wide")
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def fetch_weather_data(city="London"):
+    """Fetch weather data from OpenWeatherMap API (mock implementation)."""
+    try:
+        # Mock weather data since we don't have API keys
+        weather_data = {
+            'London': {'temp': 18, 'humidity': 65, 'description': 'Cloudy'},
+            'New York': {'temp': 22, 'humidity': 55, 'description': 'Sunny'},
+            'Tokyo': {'temp': 25, 'humidity': 70, 'description': 'Rainy'},
+            'Sydney': {'temp': 28, 'humidity': 60, 'description': 'Clear'},
+            'Paris': {'temp': 20, 'humidity': 68, 'description': 'Partly Cloudy'}
+        }
+        
+        return weather_data.get(city, {'temp': 20, 'humidity': 60, 'description': 'Unknown'})
+    except Exception as e:
+        st.error(f"Error fetching weather data: {e}")
+        return None
 
-def main():
-    st.title("🧩 Custom Components")
-    st.markdown("Explore reusable UI components and advanced Streamlit features.")
-    
-    # Sidebar navigation
-    st.sidebar.header("🧩 Component Types")
-    
-    component_type = st.sidebar.selectbox(
-        "Select Component",
-        ["Dashboard Cards", "Interactive Forms", "Data Tables", "Progress Indicators", 
-         "Notification System", "File Uploader", "Chart Components", "Layout Components"]
-    )
-    
-    if component_type == "Dashboard Cards":
-        show_dashboard_cards()
-    elif component_type == "Interactive Forms":
-        show_interactive_forms()
-    elif component_type == "Data Tables":
-        show_data_tables()
-    elif component_type == "Progress Indicators":
-        show_progress_indicators()
-    elif component_type == "Notification System":
-        show_notification_system()
-    elif component_type == "File Uploader":
-        show_file_uploader()
-    elif component_type == "Chart Components":
-        show_chart_components()
-    elif component_type == "Layout Components":
-        show_layout_components()
+@st.cache_data(ttl=600)  # Cache for 10 minutes
+def fetch_stock_data(symbol="AAPL", days=30):
+    """Fetch stock data (mock implementation)."""
+    try:
+        # Generate mock stock data
+        import numpy as np
+        np.random.seed(42)
+        
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+        dates = pd.date_range(start=start_date, end=end_date, freq='D')
+        
+        # Generate realistic stock price movement
+        base_price = 150.0
+        returns = np.random.normal(0, 0.02, len(dates))  # 2% daily volatility
+        prices = [base_price]
+        
+        for ret in returns[1:]:
+            prices.append(prices[-1] * (1 + ret))
+        
+        data = {
+            'date': dates,
+            'open': [p * (1 + np.random.normal(0, 0.005)) for p in prices],
+            'high': [p * (1 + abs(np.random.normal(0, 0.01))) for p in prices],
+            'low': [p * (1 - abs(np.random.normal(0, 0.01))) for p in prices],
+            'close': prices,
+            'volume': np.random.poisson(1000000, len(dates))
+        }
+        
+        return pd.DataFrame(data)
+    except Exception as e:
+        st.error(f"Error fetching stock data: {e}")
+        return None
 
-def show_dashboard_cards():
-    st.markdown("### 📊 Dashboard Cards")
-    st.markdown("Reusable card components for displaying metrics and information.")
-    
-    # Metric cards
-    st.markdown("#### 📈 Metric Cards")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        create_metric_card("Total Users", "12,847", "+12%", "📈", "green")
-    
-    with col2:
-        create_metric_card("Revenue", "$45,231", "+8.2%", "💰", "blue")
-    
-    with col3:
-        create_metric_card("Orders", "1,234", "-2.1%", "📦", "orange")
-    
-    with col4:
-        create_metric_card("Conversion", "3.24%", "+0.8%", "🎯", "purple")
-    
-    # Info cards
-    st.markdown("#### ℹ️ Info Cards")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        create_info_card(
-            "System Status",
-            "All systems are running normally. No issues detected.",
-            "✅",
-            "success"
-        )
-    
-    with col2:
-        create_info_card(
-            "Maintenance Notice",
-            "Scheduled maintenance on Sunday, 2:00 AM - 4:00 AM EST.",
-            "⚠️",
-            "warning"
-        )
-    
-    # Chart cards
-    st.markdown("#### 📊 Chart Cards")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        create_chart_card(
-            "Monthly Revenue",
-            create_sample_line_chart(),
-            "Revenue trend over the last 6 months"
-        )
-    
-    with col2:
-        create_chart_card(
-            "User Distribution",
-            create_sample_pie_chart(),
-            "User distribution by region"
-        )
-
-def show_interactive_forms():
-    st.markdown("### 📝 Interactive Forms")
-    st.markdown("Custom form components with validation and styling.")
-    
-    # User registration form
-    st.markdown("#### 👤 User Registration Form")
-    
-    with st.container():
-        st.markdown("##### Personal Information")
+@st.cache_data(ttl=1800)  # Cache for 30 minutes
+def fetch_news_data(category="technology", limit=10):
+    """Fetch news data (mock implementation)."""
+    try:
+        # Mock news data
+        news_templates = {
+            'technology': [
+                "New AI breakthrough in {topic}",
+                "{company} releases revolutionary {product}",
+                "Tech industry sees major changes in {sector}",
+                "Innovation in {field} promises future growth"
+            ],
+            'business': [
+                "{company} reports strong Q4 earnings",
+                "Market trends show growth in {sector}",
+                "New regulations impact {industry}",
+                "Investment opportunities in {field}"
+            ],
+            'science': [
+                "Breakthrough discovery in {field}",
+                "Research team finds new {discovery}",
+                "Scientific advancement in {area}",
+                "Study reveals insights about {topic}"
+            ]
+        }
         
-        col1, col2 = st.columns(2)
+        import random
+        topics = ['machine learning', 'blockchain', 'quantum computing', 'biotechnology', 'renewable energy']
+        companies = ['TechCorp', 'InnovateInc', 'FutureTech', 'GlobalSystems', 'NextGen']
+        sectors = ['finance', 'healthcare', 'education', 'transportation', 'energy']
         
-        with col1:
-            first_name = st.text_input("First Name", placeholder="Enter your first name")
-            email = st.text_input("Email", placeholder="Enter your email")
-            phone = st.text_input("Phone", placeholder="Enter your phone number")
+        news_items = []
+        templates = news_templates.get(category, news_templates['technology'])
         
-        with col2:
-            last_name = st.text_input("Last Name", placeholder="Enter your last name")
-            password = st.text_input("Password", type="password", placeholder="Enter your password")
-            confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password")
-        
-        # Address information
-        st.markdown("##### Address Information")
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            street = st.text_input("Street Address", placeholder="Enter street address")
-            city = st.text_input("City", placeholder="Enter city")
-        
-        with col2:
-            state = st.selectbox("State", ["", "CA", "NY", "TX", "FL", "IL", "PA", "OH", "GA", "NC", "MI"])
-            zip_code = st.text_input("ZIP Code", placeholder="Enter ZIP code")
-        
-        with col3:
-            country = st.selectbox("Country", ["", "United States", "Canada", "United Kingdom", "Germany", "France"])
-        
-        # Preferences
-        st.markdown("##### Preferences")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            newsletter = st.checkbox("Subscribe to newsletter")
-            notifications = st.checkbox("Enable email notifications")
-        
-        with col2:
-            theme = st.selectbox("Theme Preference", ["Light", "Dark", "Auto"])
-            language = st.selectbox("Language", ["English", "Spanish", "French", "German"])
-        
-        # Form validation and submission
-        if st.button("Register", type="primary"):
-            # Simple validation
-            errors = []
-            
-            if not first_name or not last_name:
-                errors.append("First name and last name are required")
-            
-            if not email or "@" not in email:
-                errors.append("Valid email is required")
-            
-            if password != confirm_password:
-                errors.append("Passwords do not match")
-            
-            if len(password) < 8:
-                errors.append("Password must be at least 8 characters")
-            
-            if errors:
-                for error in errors:
-                    st.error(error)
-            else:
-                st.success("Registration successful! Welcome to our platform.")
-                
-                # Display submitted data
-                with st.expander("View Submitted Data"):
-                    submitted_data = {
-                        "Personal Info": {
-                            "First Name": first_name,
-                            "Last Name": last_name,
-                            "Email": email,
-                            "Phone": phone
-                        },
-                        "Address": {
-                            "Street": street,
-                            "City": city,
-                            "State": state,
-                            "ZIP": zip_code,
-                            "Country": country
-                        },
-                        "Preferences": {
-                            "Newsletter": newsletter,
-                            "Notifications": notifications,
-                            "Theme": theme,
-                            "Language": language
-                        }
-                    }
-                    st.json(submitted_data)
-
-def show_data_tables():
-    st.markdown("### 📋 Data Tables")
-    st.markdown("Custom table components with sorting, filtering, and pagination.")
-    
-    # Generate sample data
-    data = {
-        'ID': range(1, 101),
-        'Name': [f'User {i}' for i in range(1, 101)],
-        'Email': [f'user{i}@example.com' for i in range(1, 101)],
-        'Status': np.random.choice(['Active', 'Inactive', 'Pending'], 100),
-        'Role': np.random.choice(['Admin', 'User', 'Manager', 'Guest'], 100),
-        'Last Login': [datetime.now() - timedelta(days=np.random.randint(0, 30)) for _ in range(100)],
-        'Score': np.random.randint(0, 100, 100)
-    }
-    
-    df = pd.DataFrame(data)
-    
-    # Table controls
-    st.markdown("#### 🎛️ Table Controls")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        # Filter by status
-        status_filter = st.multiselect("Filter by Status", df['Status'].unique(), default=df['Status'].unique())
-    
-    with col2:
-        # Filter by role
-        role_filter = st.multiselect("Filter by Role", df['Role'].unique(), default=df['Role'].unique())
-    
-    with col3:
-        # Sort by
-        sort_by = st.selectbox("Sort by", ['ID', 'Name', 'Score', 'Last Login'])
-        sort_order = st.selectbox("Sort Order", ['Ascending', 'Descending'])
-    
-    # Apply filters
-    filtered_df = df[
-        (df['Status'].isin(status_filter)) &
-        (df['Role'].isin(role_filter))
-    ]
-    
-    # Apply sorting
-    ascending = sort_order == 'Ascending'
-    filtered_df = filtered_df.sort_values(sort_by, ascending=ascending)
-    
-    # Pagination
-    items_per_page = st.slider("Items per page", 5, 50, 10)
-    
-    total_pages = len(filtered_df) // items_per_page + (1 if len(filtered_df) % items_per_page > 0 else 0)
-    current_page = st.selectbox("Page", range(1, total_pages + 1)) if total_pages > 0 else 1
-    
-    start_idx = (current_page - 1) * items_per_page
-    end_idx = start_idx + items_per_page
-    
-    paginated_df = filtered_df.iloc[start_idx:end_idx]
-    
-    # Display table
-    st.markdown("#### 📊 Data Table")
-    
-    # Table info
-    st.info(f"Showing {len(paginated_df)} of {len(filtered_df)} records (Page {current_page} of {total_pages})")
-    
-    # Custom styled table
-    create_custom_table(paginated_df)
-    
-    # Export options
-    st.markdown("#### 💾 Export Options")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if st.button("Export to CSV"):
-            csv = filtered_df.to_csv(index=False)
-            st.download_button(
-                label="Download CSV",
-                data=csv,
-                file_name="table_data.csv",
-                mime="text/csv"
+        for i in range(limit):
+            template = random.choice(templates)
+            title = template.format(
+                topic=random.choice(topics),
+                company=random.choice(companies),
+                product=random.choice(topics),
+                sector=random.choice(sectors),
+                field=random.choice(topics),
+                industry=random.choice(sectors),
+                discovery=random.choice(topics),
+                area=random.choice(topics)
             )
-    
-    with col2:
-        if st.button("Export to JSON"):
-            json_data = filtered_df.to_json(orient='records', date_format='iso')
-            st.download_button(
-                label="Download JSON",
-                data=json_data,
-                file_name="table_data.json",
-                mime="application/json"
-            )
-    
-    with col3:
-        if st.button("Export Selected"):
-            selected_rows = st.multiselect("Select rows to export", paginated_df.index)
-            if selected_rows:
-                selected_data = paginated_df.loc[selected_rows]
-                csv = selected_data.to_csv(index=False)
-                st.download_button(
-                    label="Download Selected",
-                    data=csv,
-                    file_name="selected_data.csv",
-                    mime="text/csv"
-                )
-
-def show_progress_indicators():
-    st.markdown("### ⏳ Progress Indicators")
-    st.markdown("Custom progress indicators and loading states.")
-    
-    # Progress bars
-    st.markdown("#### 📊 Progress Bars")
-    
-    # Basic progress bar
-    progress = st.slider("Progress", 0, 100, 45)
-    st.progress(progress / 100)
-    st.write(f"Progress: {progress}%")
-    
-    # Custom progress bar
-    create_custom_progress_bar("Custom Progress", progress, "blue")
-    
-    # Multi-step progress
-    st.markdown("#### 🔄 Multi-step Progress")
-    
-    steps = ["Step 1: Data Collection", "Step 2: Processing", "Step 3: Analysis", "Step 4: Results"]
-    current_step = st.selectbox("Current Step", range(len(steps)), format_func=lambda x: steps[x])
-    
-    create_multi_step_progress(steps, current_step)
-    
-    # Loading states
-    st.markdown("#### ⏳ Loading States")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("Show Loading Spinner"):
-            with st.spinner("Processing data..."):
-                time.sleep(2)
-            st.success("Data processed successfully!")
-    
-    with col2:
-        if st.button("Show Progress with Status"):
-            progress_bar = st.progress(0)
-            status_text = st.empty()
             
-            for i in range(101):
-                time.sleep(0.05)
-                progress_bar.progress(i)
-                status_text.text(f"Processing... {i}%")
+            news_items.append({
+                'title': title,
+                'summary': f"This is a summary of the news about {title.lower()}.",
+                'published_at': datetime.now() - timedelta(hours=random.randint(1, 72)),
+                'source': random.choice(['TechNews', 'BusinessDaily', 'ScienceToday', 'InnovationHub']),
+                'url': f"https://example.com/news/{i+1}"
+            })
+        
+        return pd.DataFrame(news_items)
+    except Exception as e:
+        st.error(f"Error fetching news data: {e}")
+        return None
+
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def fetch_covid_data(country="US"):
+    """Fetch COVID-19 data (mock implementation)."""
+    try:
+        # Generate mock COVID data
+        import numpy as np
+        np.random.seed(42)
+        
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=90)
+        dates = pd.date_range(start=start_date, end=end_date, freq='D')
+        
+        # Generate realistic COVID data with trends
+        base_cases = 1000
+        cases = []
+        deaths = []
+        recovered = []
+        
+        for i, date in enumerate(dates):
+            # Add some trend and seasonality
+            trend_factor = 1 + 0.1 * np.sin(i * 2 * np.pi / 30)  # Monthly cycle
+            random_factor = np.random.normal(1, 0.2)
             
-            status_text.text("Complete!")
-            st.success("Task completed successfully!")
-    
-    # Animated progress
-    st.markdown("#### 🎬 Animated Progress")
-    
-    if st.button("Start Animated Progress"):
-        placeholder = st.empty()
+            daily_cases = int(base_cases * trend_factor * random_factor)
+            cases.append(daily_cases)
+            deaths.append(int(daily_cases * 0.02 * np.random.normal(1, 0.3)))  # ~2% death rate
+            recovered.append(int(daily_cases * 0.8 * np.random.normal(1, 0.2)))  # ~80% recovery rate
         
-        for i in range(101):
-            placeholder.progress(i)
-            time.sleep(0.02)
+        data = {
+            'date': dates,
+            'new_cases': cases,
+            'new_deaths': deaths,
+            'new_recovered': recovered,
+            'total_cases': np.cumsum(cases),
+            'total_deaths': np.cumsum(deaths),
+            'total_recovered': np.cumsum(recovered)
+        }
         
-        placeholder.success("Animation complete!")
+        return pd.DataFrame(data)
+    except Exception as e:
+        st.error(f"Error fetching COVID data: {e}")
+        return None
 
-def show_notification_system():
-    st.markdown("### 🔔 Notification System")
-    st.markdown("Custom notification components for user feedback.")
-    
-    # Notification types
-    st.markdown("#### 📢 Notification Types")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("Success Notification"):
-            create_notification("Success", "Operation completed successfully!", "success")
+def make_api_request(url, params=None, headers=None, timeout=10):
+    """Generic function to make API requests with error handling."""
+    try:
+        response = requests.get(url, params=params, headers=headers, timeout=timeout)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"API request failed: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        st.error(f"Failed to parse JSON response: {e}")
+        return None
+
+@st.cache_data(ttl=300)
+def fetch_user_analytics(user_id=None):
+    """Fetch user analytics data (mock implementation)."""
+    try:
+        import numpy as np
+        np.random.seed(42)
         
-        if st.button("Info Notification"):
-            create_notification("Info", "Here's some useful information.", "info")
-    
-    with col2:
-        if st.button("Warning Notification"):
-            create_notification("Warning", "Please review your input.", "warning")
+        # Generate mock user analytics
+        metrics = {
+            'total_users': np.random.randint(10000, 50000),
+            'active_users': np.random.randint(5000, 15000),
+            'new_signups': np.random.randint(100, 500),
+            'page_views': np.random.randint(50000, 200000),
+            'avg_session_duration': np.random.randint(120, 600),  # seconds
+            'bounce_rate': np.random.uniform(0.3, 0.7),
+            'conversion_rate': np.random.uniform(0.01, 0.05)
+        }
         
-        if st.button("Error Notification"):
-            create_notification("Error", "Something went wrong. Please try again.", "error")
-    
-    # Toast notifications
-    st.markdown("#### 🍞 Toast Notifications")
-    
-    if st.button("Show Toast Notification"):
-        create_toast_notification("This is a toast notification!", "info")
-    
-    # Notification with actions
-    st.markdown("#### ⚡ Notifications with Actions")
-    
-    create_action_notification(
-        "New update available",
-        "A new version of the application is available for download.",
-        ["Download Now", "Remind Later", "Dismiss"]
-    )
-    
-    # Notification history
-    st.markdown("#### 📜 Notification History")
-    
-    # Simulate notification history
-    notifications = [
-        {"type": "success", "message": "Data saved successfully", "time": "2 minutes ago"},
-        {"type": "info", "message": "System maintenance scheduled", "time": "1 hour ago"},
-        {"type": "warning", "message": "Low disk space detected", "time": "3 hours ago"},
-        {"type": "error", "message": "Failed to connect to database", "time": "1 day ago"}
-    ]
-    
-    for notification in notifications:
-        create_notification_history_item(notification["type"], notification["message"], notification["time"])
-
-def show_file_uploader():
-    st.markdown("### 📁 File Uploader")
-    st.markdown("Custom file upload components with drag-and-drop and preview.")
-    
-    # Basic file uploader
-    st.markdown("#### 📤 Basic File Uploader")
-    
-    uploaded_files = st.file_uploader(
-        "Choose files",
-        accept_multiple_files=True,
-        type=['txt', 'csv', 'json', 'png', 'jpg', 'jpeg']
-    )
-    
-    if uploaded_files:
-        st.write(f"Uploaded {len(uploaded_files)} files:")
-        
-        for uploaded_file in uploaded_files:
-            col1, col2, col3 = st.columns([2, 1, 1])
-            
-            with col1:
-                st.write(f"**{uploaded_file.name}**")
-            
-            with col2:
-                st.write(f"Size: {uploaded_file.size} bytes")
-            
-            with col3:
-                st.write(f"Type: {uploaded_file.type}")
-    
-    # Drag and drop area
-    st.markdown("#### 🖱️ Drag and Drop Area")
-    
-    create_drag_drop_area()
-    
-    # File preview
-    st.markdown("#### 👀 File Preview")
-    
-    preview_file = st.file_uploader("Upload file for preview", type=['txt', 'csv', 'json'])
-    
-    if preview_file:
-        create_file_preview(preview_file)
-
-def show_chart_components():
-    st.markdown("### 📊 Chart Components")
-    st.markdown("Reusable chart components with customization options.")
-    
-    # Chart type selection
-    chart_type = st.selectbox("Select Chart Type", ["Line Chart", "Bar Chart", "Scatter Plot", "Pie Chart", "Heatmap"])
-    
-    # Generate sample data
-    data = {
-        'x': np.linspace(0, 10, 50),
-        'y': np.sin(np.linspace(0, 10, 50)) + np.random.normal(0, 0.1, 50),
-        'category': np.random.choice(['A', 'B', 'C'], 50),
-        'size': np.random.uniform(10, 100, 50)
-    }
-    
-    df = pd.DataFrame(data)
-    
-    # Chart customization
-    st.markdown("#### ⚙️ Chart Customization")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        chart_title = st.text_input("Chart Title", "Sample Chart")
-        color_scheme = st.selectbox("Color Scheme", ["plotly", "plotly_dark", "plotly_white", "ggplot2", "seaborn"])
-    
-    with col2:
-        chart_height = st.slider("Chart Height", 300, 800, 500)
-        show_legend = st.checkbox("Show Legend", value=True)
-    
-    # Create chart
-    if chart_type == "Line Chart":
-        fig = px.line(df, x='x', y='y', title=chart_title, color_discrete_sequence=px.colors.qualitative.Set1)
-    elif chart_type == "Bar Chart":
-        fig = px.bar(df, x='x', y='y', title=chart_title, color_discrete_sequence=px.colors.qualitative.Set2)
-    elif chart_type == "Scatter Plot":
-        fig = px.scatter(df, x='x', y='y', color='category', size='size', title=chart_title)
-    elif chart_type == "Pie Chart":
-        category_counts = df['category'].value_counts()
-        fig = px.pie(values=category_counts.values, names=category_counts.index, title=chart_title)
-    elif chart_type == "Heatmap":
-        corr_matrix = df[['x', 'y']].corr()
-        fig = px.imshow(corr_matrix, title=chart_title, color_continuous_scale='RdBu')
-    
-    fig.update_layout(
-        height=chart_height,
-        showlegend=show_legend,
-        template=color_scheme
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Chart export
-    st.markdown("#### 💾 Chart Export")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if st.button("Export as PNG"):
-            st.info("Chart would be exported as PNG")
-    
-    with col2:
-        if st.button("Export as SVG"):
-            st.info("Chart would be exported as SVG")
-    
-    with col3:
-        if st.button("Export as HTML"):
-            st.info("Chart would be exported as HTML")
-
-def show_layout_components():
-    st.markdown("### 🎨 Layout Components")
-    st.markdown("Custom layout components for better organization.")
-    
-    # Tabs
-    st.markdown("#### 📑 Tab Layout")
-    
-    tab1, tab2, tab3 = st.tabs(["Overview", "Details", "Settings"])
-    
-    with tab1:
-        st.markdown("**Overview Content**")
-        st.write("This is the overview tab content.")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Metric 1", "100", "+10%")
-        with col2:
-            st.metric("Metric 2", "200", "-5%")
-    
-    with tab2:
-        st.markdown("**Details Content**")
-        st.write("This is the details tab content.")
-        
-        # Sample data table
-        data = pd.DataFrame({
-            'Item': ['Item 1', 'Item 2', 'Item 3'],
-            'Value': [100, 200, 300],
-            'Status': ['Active', 'Inactive', 'Active']
-        })
-        st.dataframe(data)
-    
-    with tab3:
-        st.markdown("**Settings Content**")
-        st.write("This is the settings tab content.")
-        
-        st.checkbox("Enable notifications")
-        st.checkbox("Auto-save")
-        st.selectbox("Theme", ["Light", "Dark", "Auto"])
-    
-    # Accordion
-    st.markdown("#### 📋 Accordion Layout")
-    
-    with st.expander("Section 1: Basic Information"):
-        st.write("This is the content for section 1.")
-        st.text_input("Name")
-        st.text_input("Email")
-    
-    with st.expander("Section 2: Advanced Settings"):
-        st.write("This is the content for section 2.")
-        st.slider("Threshold", 0, 100, 50)
-        st.selectbox("Algorithm", ["Algorithm A", "Algorithm B", "Algorithm C"])
-    
-    with st.expander("Section 3: Documentation"):
-        st.write("This is the content for section 3.")
-        st.markdown("""
-        ### Documentation
-        
-        This is some documentation content.
-        
-        - Point 1
-        - Point 2
-        - Point 3
-        """)
-    
-    # Sidebar layout
-    st.markdown("#### 📐 Sidebar Layout")
-    
-    # Create a custom sidebar-like container
-    with st.container():
-        col1, col2 = st.columns([1, 4])
-        
-        with col1:
-            st.markdown("**Filters**")
-            st.selectbox("Category", ["All", "Category A", "Category B"])
-            st.selectbox("Status", ["All", "Active", "Inactive"])
-            st.slider("Range", 0, 100, (25, 75))
-        
-        with col2:
-            st.markdown("**Main Content**")
-            st.write("This is the main content area with filters applied from the sidebar.")
-            
-            # Sample content
-            for i in range(5):
-                st.write(f"Content item {i+1}")
-
-# Helper functions for custom components
-
-def create_metric_card(title, value, delta, icon, color):
-    """Create a custom metric card."""
-    st.markdown(f"""
-    <div style="
-        background-color: white;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: 1px solid #e0e0e0;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    ">
-        <div style="font-size: 2rem; margin-bottom: 0.5rem;">{icon}</div>
-        <div style="font-size: 1.5rem; font-weight: bold; color: {color};">{value}</div>
-        <div style="font-size: 0.9rem; color: #666;">{title}</div>
-        <div style="font-size: 0.8rem; color: {color};">{delta}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def create_info_card(title, message, icon, status):
-    """Create a custom info card."""
-    colors = {
-        "success": "#d4edda",
-        "warning": "#fff3cd",
-        "error": "#f8d7da",
-        "info": "#d1ecf1"
-    }
-    
-    st.markdown(f"""
-    <div style="
-        background-color: {colors.get(status, colors['info'])};
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #007bff;
-        margin: 1rem 0;
-    ">
-        <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">
-            {icon} {title}
-        </div>
-        <div style="color: #666;">{message}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def create_chart_card(title, chart, description):
-    """Create a custom chart card."""
-    st.markdown(f"""
-    <div style="
-        background-color: white;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: 1px solid #e0e0e0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin: 1rem 0;
-    ">
-        <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem;">{title}</div>
-        <div style="color: #666; margin-bottom: 1rem;">{description}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.plotly_chart(chart, use_container_width=True)
-
-def create_sample_line_chart():
-    """Create a sample line chart."""
-    x = np.linspace(0, 10, 50)
-    y = np.sin(x) + np.random.normal(0, 0.1, 50)
-    
-    fig = px.line(x=x, y=y, title="Sample Line Chart")
-    fig.update_layout(height=300)
-    return fig
-
-def create_sample_pie_chart():
-    """Create a sample pie chart."""
-    data = {'Region': ['North', 'South', 'East', 'West'], 'Users': [30, 25, 20, 25]}
-    df = pd.DataFrame(data)
-    
-    fig = px.pie(df, values='Users', names='Region', title="Sample Pie Chart")
-    fig.update_layout(height=300)
-    return fig
-
-def create_custom_progress_bar(label, progress, color):
-    """Create a custom progress bar."""
-    st.markdown(f"""
-    <div style="margin: 1rem 0;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-            <span>{label}</span>
-            <span>{progress}%</span>
-        </div>
-        <div style="
-            width: 100%;
-            height: 20px;
-            background-color: #f0f0f0;
-            border-radius: 10px;
-            overflow: hidden;
-        ">
-            <div style="
-                width: {progress}%;
-                height: 100%;
-                background-color: {color};
-                transition: width 0.3s ease;
-            "></div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def create_multi_step_progress(steps, current_step):
-    """Create a multi-step progress indicator."""
-    st.markdown("#### Multi-step Progress")
-    
-    progress_html = '<div style="display: flex; justify-content: space-between; margin: 1rem 0;">'
-    
-    for i, step in enumerate(steps):
-        if i < current_step:
-            status = "✅"
-            color = "#28a745"
-        elif i == current_step:
-            status = "🔄"
-            color = "#007bff"
-        else:
-            status = "⭕"
-            color = "#6c757d"
-        
-        progress_html += f"""
-        <div style="text-align: center; flex: 1;">
-            <div style="font-size: 1.5rem; color: {color}; margin-bottom: 0.5rem;">{status}</div>
-            <div style="font-size: 0.8rem; color: {color};">{step}</div>
-        </div>
-        """
-    
-    progress_html += '</div>'
-    st.markdown(progress_html, unsafe_allow_html=True)
-
-def create_notification(title, message, notification_type):
-    """Create a custom notification."""
-    colors = {
-        "success": "#d4edda",
-        "warning": "#fff3cd",
-        "error": "#f8d7da",
-        "info": "#d1ecf1"
-    }
-    
-    icons = {
-        "success": "✅",
-        "warning": "⚠️",
-        "error": "❌",
-        "info": "ℹ️"
-    }
-    
-    st.markdown(f"""
-    <div style="
-        background-color: {colors[notification_type]};
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #007bff;
-        margin: 1rem 0;
-        animation: slideIn 0.3s ease;
-    ">
-        <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;">
-            {icons[notification_type]} {title}
-        </div>
-        <div style="color: #666;">{message}</div>
-    </div>
-    
-    <style>
-    @keyframes slideIn {{
-        from {{ transform: translateX(-100%); opacity: 0; }}
-        to {{ transform: translateX(0); opacity: 1; }}
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-
-def create_toast_notification(message, notification_type):
-    """Create a toast notification."""
-    st.markdown(f"""
-    <div style="
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background-color: white;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        z-index: 1000;
-        animation: slideInRight 0.3s ease;
-    ">
-        {message}
-    </div>
-    
-    <style>
-    @keyframes slideInRight {{
-        from {{ transform: translateX(100%); opacity: 0; }}
-        to {{ transform: translateX(0); opacity: 1; }}
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-
-def create_action_notification(title, message, actions):
-    """Create a notification with action buttons."""
-    st.markdown(f"""
-    <div style="
-        background-color: #d1ecf1;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #007bff;
-        margin: 1rem 0;
-    ">
-        <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;">
-            ℹ️ {title}
-        </div>
-        <div style="color: #666; margin-bottom: 1rem;">{message}</div>
-        <div style="display: flex; gap: 0.5rem;">
-    """, unsafe_allow_html=True)
-    
-    for action in actions:
-        if st.button(action, key=f"action_{action}"):
-            st.success(f"Action '{action}' clicked!")
-    
-    st.markdown("</div></div>", unsafe_allow_html=True)
-
-def create_notification_history_item(notification_type, message, time):
-    """Create a notification history item."""
-    icons = {
-        "success": "✅",
-        "warning": "⚠️",
-        "error": "❌",
-        "info": "ℹ️"
-    }
-    
-    st.markdown(f"""
-    <div style="
-        background-color: white;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        border: 1px solid #e0e0e0;
-        margin: 0.5rem 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    ">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="font-size: 1.2rem;">{icons[notification_type]}</span>
-            <span>{message}</span>
-        </div>
-        <span style="color: #666; font-size: 0.8rem;">{time}</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-def create_drag_drop_area():
-    """Create a drag and drop area."""
-    st.markdown("""
-    <div style="
-        border: 2px dashed #ccc;
-        border-radius: 0.5rem;
-        padding: 2rem;
-        text-align: center;
-        background-color: #f9f9f9;
-        margin: 1rem 0;
-    ">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
-        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">Drag and drop files here</div>
-        <div style="color: #666;">or click to browse</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def create_file_preview(file):
-    """Create a file preview component."""
-    st.markdown(f"""
-    <div style="
-        background-color: white;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: 1px solid #e0e0e0;
-        margin: 1rem 0;
-    ">
-        <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;">
-            📄 {file.name}
-        </div>
-        <div style="color: #666; margin-bottom: 1rem;">
-            Size: {file.size} bytes | Type: {file.type}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Show file content based on type
-    if file.type == "text/plain":
-        content = file.read().decode('utf-8')
-        st.text_area("File Content", content, height=200)
-    elif file.type == "text/csv":
-        df = pd.read_csv(file)
-        st.dataframe(df.head(10))
-    elif file.type == "application/json":
-        content = file.read().decode('utf-8')
-        st.json(json.loads(content))
-
-def create_custom_table(df):
-    """Create a custom styled table."""
-    st.markdown("""
-    <style>
-    .custom-table {
-        background-color: white;
-        border-radius: 0.5rem;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .custom-table th {
-        background-color: #f8f9fa;
-        padding: 0.75rem;
-        font-weight: bold;
-        text-align: left;
-        border-bottom: 1px solid #dee2e6;
-    }
-    .custom-table td {
-        padding: 0.75rem;
-        border-bottom: 1px solid #dee2e6;
-    }
-    .custom-table tr:hover {
-        background-color: #f8f9fa;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    st.dataframe(df, use_container_width=True)
-
-if __name__ == "__main__":
-    main() 
+        return metrics
+    except Exception as e:
+        st.error(f"Error fetching user analytics: {e}")
+        return None 
 
 
-
-
-------------dataviz------------
+---------------------------------------cache_utils-------------------------------------------------
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import seaborn as sns
-import matplotlib.pyplot as plt
-from utils.data_generator import generate_sample_sales_data, generate_time_series_data, generate_user_activity_data
+from functools import wraps
+import time
+import hashlib
+import json
 
-# Page configuration
-st.set_page_config(page_title="Data Visualization", page_icon="📈", layout="wide")
+def cache_with_key_generator(key_func):
+    """Decorator that allows custom key generation for caching."""
+    def decorator(func):
+        @st.cache_data
+        def cached_func(*args, **kwargs):
+            # Generate custom key
+            custom_key = key_func(*args, **kwargs)
+            # Use the custom key as part of the cache key
+            return func(*args, **kwargs)
+        return cached_func
+    return decorator
 
-def main():
-    st.title("📈 Data Visualization Examples")
-    st.markdown("Explore various types of interactive charts and visualizations using Streamlit and Plotly.")
+def hash_dataframe(df):
+    """Generate a hash for a dataframe to use as cache key."""
+    return hashlib.md5(pd.util.hash_pandas_object(df).values).hexdigest()
+
+def cache_dataframe_operation(operation_name):
+    """Cache decorator specifically for dataframe operations."""
+    def decorator(func):
+        @st.cache_data
+        def cached_func(df, *args, **kwargs):
+            # Include dataframe hash in cache key
+            df_hash = hash_dataframe(df)
+            return func(df, *args, **kwargs)
+        return cached_func
+    return decorator
+
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def expensive_calculation(data, parameters):
+    """Example of expensive calculation with caching."""
+    # Simulate expensive computation
+    time.sleep(0.1)
     
-    # Sidebar for controls
-    st.sidebar.header("📊 Chart Controls")
+    result = {
+        'mean': np.mean(data),
+        'std': np.std(data),
+        'percentiles': np.percentile(data, [25, 50, 75]),
+        'parameters': parameters
+    }
     
-    # Data selection
-    data_type = st.sidebar.selectbox(
-        "Select Dataset",
-        ["Sales Data", "Time Series", "User Activity", "Custom Data"]
-    )
+    return result
+
+@st.cache_data(ttl=1800)  # Cache for 30 minutes
+def load_large_dataset(file_path):
+    """Load large dataset with caching."""
+    # Simulate loading large dataset
+    time.sleep(0.5)
     
-    # Chart type selection
-    chart_type = st.sidebar.selectbox(
-        "Select Chart Type",
-        ["Line Chart", "Bar Chart", "Scatter Plot", "Histogram", "Box Plot", "Heatmap", "3D Scatter", "Multi-Chart"]
-    )
+    # Generate mock large dataset
+    data = {
+        'id': range(10000),
+        'value': np.random.normal(100, 20, 10000),
+        'category': np.random.choice(['A', 'B', 'C', 'D'], 10000),
+        'timestamp': pd.date_range(start='2023-01-01', periods=10000, freq='H')
+    }
     
-    # Load data based on selection
-    if data_type == "Sales Data":
-        df = generate_sample_sales_data()
-        st.sidebar.info(f"📊 Sales Data: {len(df)} records")
-    elif data_type == "Time Series":
-        df = generate_time_series_data()
-        st.sidebar.info(f"⏰ Time Series: {len(df)} data points")
-    elif data_type == "User Activity":
-        df = generate_user_activity_data()
-        st.sidebar.info(f"👥 User Activity: {len(df)} records")
-    else:
-        # Custom data
-        df = pd.DataFrame({
-            'x': np.random.randn(100),
-            'y': np.random.randn(100),
-            'category': np.random.choice(['A', 'B', 'C'], 100),
-            'size': np.random.uniform(10, 100, 100)
+    return pd.DataFrame(data)
+
+@st.cache_data(ttl=600)  # Cache for 10 minutes
+def compute_aggregations(df, group_by_columns, agg_functions):
+    """Compute aggregations with caching."""
+    # Simulate expensive aggregation
+    time.sleep(0.2)
+    
+    return df.groupby(group_by_columns).agg(agg_functions).reset_index()
+
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def fetch_external_data(source, parameters):
+    """Fetch external data with caching."""
+    # Simulate API call
+    time.sleep(0.3)
+    
+    # Mock external data
+    data = {
+        'source': source,
+        'timestamp': pd.Timestamp.now(),
+        'data': np.random.rand(100),
+        'parameters': parameters
+    }
+    
+    return data
+
+def clear_cache_for_function(func_name):
+    """Clear cache for a specific function."""
+    try:
+        # This is a simplified version - in practice, you'd need to access Streamlit's cache
+        st.cache_data.clear()
+        st.success(f"Cache cleared for {func_name}")
+    except Exception as e:
+        st.error(f"Failed to clear cache: {e}")
+
+def get_cache_info():
+    """Get information about cache usage (mock implementation)."""
+    return {
+        'cache_size': '2.5 MB',
+        'cache_hits': 156,
+        'cache_misses': 23,
+        'hit_rate': '87.2%',
+        'functions_cached': 8
+    }
+
+@st.cache_data(ttl=1200)  # Cache for 20 minutes
+def process_image_data(image_data, processing_params):
+    """Process image data with caching."""
+    # Simulate image processing
+    time.sleep(0.4)
+    
+    # Mock image processing result
+    result = {
+        'processed_image': image_data,  # In real app, this would be processed image
+        'metadata': {
+            'size': len(image_data),
+            'processing_time': 0.4,
+            'parameters': processing_params
+        }
+    }
+    
+    return result
+
+@st.cache_data(ttl=900)  # Cache for 15 minutes
+def generate_report_data(report_type, date_range, filters):
+    """Generate report data with caching."""
+    # Simulate report generation
+    time.sleep(0.6)
+    
+    # Mock report data
+    report_data = {
+        'report_type': report_type,
+        'date_range': date_range,
+        'filters': filters,
+        'summary': {
+            'total_records': np.random.randint(1000, 10000),
+            'total_value': np.random.uniform(100000, 1000000),
+            'growth_rate': np.random.uniform(-0.1, 0.3)
+        },
+        'details': pd.DataFrame({
+            'category': ['A', 'B', 'C', 'D'],
+            'value': np.random.rand(4) * 1000,
+            'percentage': np.random.rand(4)
         })
-        st.sidebar.info(f"🎲 Custom Data: {len(df)} points")
+    }
     
-    # Display data info
-    with st.expander("📋 Dataset Information"):
-        st.write(f"**Shape:** {df.shape}")
-        st.write(f"**Columns:** {list(df.columns)}")
-        st.write("**Sample Data:**")
-        st.dataframe(df.head())
-    
-    # Create visualizations based on chart type
-    if chart_type == "Line Chart":
-        create_line_chart(df, data_type)
-    elif chart_type == "Bar Chart":
-        create_bar_chart(df, data_type)
-    elif chart_type == "Scatter Plot":
-        create_scatter_plot(df, data_type)
-    elif chart_type == "Histogram":
-        create_histogram(df, data_type)
-    elif chart_type == "Box Plot":
-        create_box_plot(df, data_type)
-    elif chart_type == "Heatmap":
-        create_heatmap(df, data_type)
-    elif chart_type == "3D Scatter":
-        create_3d_scatter(df, data_type)
-    elif chart_type == "Multi-Chart":
-        create_multi_chart(df, data_type)
-    
-    # Additional features
-    st.markdown("---")
-    st.markdown("### 🎛️ Interactive Features")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### Real-time Updates")
-        update_freq = st.slider("Update Frequency (seconds)", 1, 10, 5)
-        if st.button("Start Real-time Updates"):
-            st.info(f"Real-time updates would run every {update_freq} seconds")
-    
-    with col2:
-        st.markdown("#### Export Options")
-        export_format = st.selectbox("Export Format", ["PNG", "SVG", "PDF", "HTML"])
-        if st.button("Export Chart"):
-            st.success(f"Chart exported as {export_format}")
+    return report_data
 
-def create_line_chart(df, data_type):
-    st.markdown("### 📈 Line Chart")
-    
-    if data_type == "Sales Data":
-        # Sales over time
-        sales_by_date = df.groupby('date')['sales_amount'].sum().reset_index()
-        fig = px.line(sales_by_date, x='date', y='sales_amount', 
-                     title="Daily Sales Trend")
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Sales by category over time
-        sales_by_category = df.groupby(['date', 'product_category'])['sales_amount'].sum().reset_index()
-        fig2 = px.line(sales_by_category, x='date', y='sales_amount', 
-                      color='product_category', title="Sales by Category Over Time")
-        fig2.update_layout(height=500)
-        st.plotly_chart(fig2, use_container_width=True)
-        
-    elif data_type == "Time Series":
-        fig = px.line(df, x='timestamp', y='value', 
-                     title="Time Series Data")
-        fig.add_scatter(x=df['timestamp'], y=df['moving_average'], 
-                       mode='lines', name='Moving Average', line=dict(color='red'))
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
-        
-    else:
-        # Generic line chart
-        if 'x' in df.columns and 'y' in df.columns:
-            fig = px.line(df, x='x', y='y', title="Line Chart")
-            fig.update_layout(height=500)
-            st.plotly_chart(fig, use_container_width=True)
+def cache_performance_monitor():
+    """Monitor cache performance (mock implementation)."""
+    return {
+        'total_requests': 245,
+        'cache_hits': 198,
+        'cache_misses': 47,
+        'hit_rate': '80.8%',
+        'avg_response_time': '0.15s',
+        'cache_size': '1.8 MB',
+        'memory_usage': '12.3%'
+    }
 
-def create_bar_chart(df, data_type):
-    st.markdown("### 📊 Bar Chart")
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def get_user_preferences(user_id):
+    """Get user preferences with caching."""
+    # Simulate database query
+    time.sleep(0.1)
     
-    if data_type == "Sales Data":
-        # Sales by category
-        category_sales = df.groupby('product_category')['sales_amount'].sum().reset_index()
-        fig = px.bar(category_sales, x='product_category', y='sales_amount',
-                    title="Total Sales by Category", color='sales_amount')
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Sales by region
-        region_sales = df.groupby('region')['sales_amount'].sum().reset_index()
-        fig2 = px.bar(region_sales, x='region', y='sales_amount',
-                     title="Total Sales by Region", color='sales_amount')
-        fig2.update_layout(height=500)
-        st.plotly_chart(fig2, use_container_width=True)
-        
-    elif data_type == "User Activity":
-        # Average page views by user
-        user_avg = df.groupby('user_id')['page_views'].mean().reset_index()
-        user_avg = user_avg.sort_values('page_views', ascending=False).head(20)
-        fig = px.bar(user_avg, x='user_id', y='page_views',
-                    title="Average Page Views by User (Top 20)")
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
-        
-    else:
-        # Generic bar chart
-        if 'category' in df.columns:
-            category_counts = df['category'].value_counts().reset_index()
-            category_counts.columns = ['category', 'count']
-            fig = px.bar(category_counts, x='category', y='count',
-                        title="Category Distribution")
-            fig.update_layout(height=500)
-            st.plotly_chart(fig, use_container_width=True)
-
-def create_scatter_plot(df, data_type):
-    st.markdown("### 🔍 Scatter Plot")
+    # Mock user preferences
+    preferences = {
+        'theme': 'dark',
+        'language': 'en',
+        'timezone': 'UTC',
+        'notifications': True,
+        'dashboard_layout': 'grid'
+    }
     
-    if data_type == "Sales Data":
-        fig = px.scatter(df, x='sales_amount', y='quantity_sold', 
-                        color='product_category', size='customer_rating',
-                        title="Sales Amount vs Quantity Sold",
-                        hover_data=['region', 'discount_percent'])
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
-        
-    elif data_type == "User Activity":
-        fig = px.scatter(df, x='session_duration', y='page_views',
-                        color='bounce_rate', size='conversion_rate',
-                        title="Session Duration vs Page Views",
-                        hover_data=['user_id', 'date'])
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
-        
-    else:
-        # Generic scatter plot
-        if 'x' in df.columns and 'y' in df.columns:
-            color_col = 'category' if 'category' in df.columns else None
-            size_col = 'size' if 'size' in df.columns else None
-            
-            fig = px.scatter(df, x='x', y='y', color=color_col, size=size_col,
-                           title="Scatter Plot")
-            fig.update_layout(height=500)
-            st.plotly_chart(fig, use_container_width=True)
+    return preferences
 
-def create_histogram(df, data_type):
-    st.markdown("### 📊 Histogram")
-    
-    if data_type == "Sales Data":
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            fig = px.histogram(df, x='sales_amount', nbins=30,
-                             title="Distribution of Sales Amount")
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            fig2 = px.histogram(df, x='customer_rating', nbins=20,
-                              title="Distribution of Customer Ratings")
-            fig2.update_layout(height=400)
-            st.plotly_chart(fig2, use_container_width=True)
-            
-    elif data_type == "User Activity":
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            fig = px.histogram(df, x='page_views', nbins=30,
-                             title="Distribution of Page Views")
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            fig2 = px.histogram(df, x='session_duration', nbins=30,
-                              title="Distribution of Session Duration")
-            fig2.update_layout(height=400)
-            st.plotly_chart(fig2, use_container_width=True)
-            
-    else:
-        if 'x' in df.columns:
-            fig = px.histogram(df, x='x', nbins=30, title="Distribution")
-            fig.update_layout(height=500)
-            st.plotly_chart(fig, use_container_width=True)
-
-def create_box_plot(df, data_type):
-    st.markdown("### 📦 Box Plot")
-    
-    if data_type == "Sales Data":
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            fig = px.box(df, x='product_category', y='sales_amount',
-                        title="Sales Amount by Category")
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            fig2 = px.box(df, x='region', y='customer_rating',
-                         title="Customer Rating by Region")
-            fig2.update_layout(height=400)
-            st.plotly_chart(fig2, use_container_width=True)
-            
-    elif data_type == "User Activity":
-        fig = px.box(df, x='user_id', y='page_views',
-                    title="Page Views by User")
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
-        
-    else:
-        if 'category' in df.columns and 'x' in df.columns:
-            fig = px.box(df, x='category', y='x', title="Box Plot by Category")
-            fig.update_layout(height=500)
-            st.plotly_chart(fig, use_container_width=True)
-
-def create_heatmap(df, data_type):
-    st.markdown("### 🔥 Heatmap")
-    
-    if data_type == "Sales Data":
-        # Create correlation matrix
-        numeric_cols = df.select_dtypes(include=[np.number]).columns
-        corr_matrix = df[numeric_cols].corr()
-        
-        fig = px.imshow(corr_matrix, 
-                       title="Correlation Matrix",
-                       color_continuous_scale='RdBu',
-                       aspect='auto')
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
-        
-    elif data_type == "User Activity":
-        # Create pivot table for heatmap
-        pivot_data = df.pivot_table(
-            values='page_views', 
-            index=df['date'].dt.day_name(), 
-            columns=df['date'].dt.hour, 
-            aggfunc='mean'
-        )
-        
-        fig = px.imshow(pivot_data, 
-                       title="Average Page Views by Day and Hour",
-                       color_continuous_scale='Viridis',
-                       aspect='auto')
-        fig.update_layout(height=500)
-        st.plotly_chart(fig, use_container_width=True)
-        
-    else:
-        # Generic correlation heatmap
-        numeric_cols = df.select_dtypes(include=[np.number]).columns
-        if len(numeric_cols) > 1:
-            corr_matrix = df[numeric_cols].corr()
-            fig = px.imshow(corr_matrix, 
-                           title="Correlation Matrix",
-                           color_continuous_scale='RdBu',
-                           aspect='auto')
-            fig.update_layout(height=500)
-            st.plotly_chart(fig, use_container_width=True)
-
-def create_3d_scatter(df, data_type):
-    st.markdown("### 🌐 3D Scatter Plot")
-    
-    if data_type == "Sales Data":
-        fig = px.scatter_3d(df, x='sales_amount', y='quantity_sold', z='customer_rating',
-                           color='product_category', size='discount_percent',
-                           title="3D Sales Analysis")
-        fig.update_layout(height=600)
-        st.plotly_chart(fig, use_container_width=True)
-        
-    elif data_type == "User Activity":
-        fig = px.scatter_3d(df, x='page_views', y='session_duration', z='bounce_rate',
-                           color='conversion_rate', size='page_views',
-                           title="3D User Activity Analysis")
-        fig.update_layout(height=600)
-        st.plotly_chart(fig, use_container_width=True)
-        
-    else:
-        if 'x' in df.columns and 'y' in df.columns:
-            # Create a third dimension
-            df['z'] = np.random.randn(len(df))
-            fig = px.scatter_3d(df, x='x', y='y', z='z',
-                               color='category' if 'category' in df.columns else None,
-                               title="3D Scatter Plot")
-            fig.update_layout(height=600)
-            st.plotly_chart(fig, use_container_width=True)
-
-def create_multi_chart(df, data_type):
-    st.markdown("### 📊 Multi-Chart Dashboard")
-    
-    if data_type == "Sales Data":
-        # Create subplots
-        fig = make_subplots(
-            rows=2, cols=2,
-            subplot_titles=('Sales Trend', 'Category Distribution', 'Regional Sales', 'Rating Distribution'),
-            specs=[[{"type": "scatter"}, {"type": "bar"}],
-                   [{"type": "bar"}, {"type": "histogram"}]]
-        )
-        
-        # Sales trend
-        sales_by_date = df.groupby('date')['sales_amount'].sum().reset_index()
-        fig.add_trace(go.Scatter(x=sales_by_date['date'], y=sales_by_date['sales_amount'],
-                                mode='lines', name='Sales Trend'), row=1, col=1)
-        
-        # Category distribution
-        category_sales = df.groupby('product_category')['sales_amount'].sum()
-        fig.add_trace(go.Bar(x=category_sales.index, y=category_sales.values,
-                            name='Category Sales'), row=1, col=2)
-        
-        # Regional sales
-        region_sales = df.groupby('region')['sales_amount'].sum()
-        fig.add_trace(go.Bar(x=region_sales.index, y=region_sales.values,
-                            name='Regional Sales'), row=2, col=1)
-        
-        # Rating distribution
-        fig.add_trace(go.Histogram(x=df['customer_rating'], name='Rating Dist'),
-                     row=2, col=2)
-        
-        fig.update_layout(height=800, title_text="Sales Dashboard")
-        st.plotly_chart(fig, use_container_width=True)
-        
-    else:
-        # Generic multi-chart
-        fig = make_subplots(
-            rows=2, cols=2,
-            subplot_titles=('Chart 1', 'Chart 2', 'Chart 3', 'Chart 4')
-        )
-        
-        if 'x' in df.columns and 'y' in df.columns:
-            fig.add_trace(go.Scatter(x=df['x'], y=df['y'], mode='markers'), row=1, col=1)
-            fig.add_trace(go.Histogram(x=df['x']), row=1, col=2)
-            fig.add_trace(go.Bar(x=df['x'][:10], y=df['y'][:10]), row=2, col=1)
-            fig.add_trace(go.Box(y=df['y']), row=2, col=2)
-        
-        fig.update_layout(height=800, title_text="Multi-Chart Dashboard")
-        st.plotly_chart(fig, use_container_width=True)
-
-if __name__ == "__main__":
-    main() 
+def invalidate_cache_pattern(pattern):
+    """Invalidate cache entries matching a pattern (mock implementation)."""
+    st.info(f"Cache entries matching '{pattern}' would be invalidated")
+    # In a real implementation, you would clear specific cache entries
+    return True 
 
 
---------------------------------------file_upload----------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------data_generator.py---------------------------------------------
 import streamlit as st
 import pandas as pd
 import numpy as np
-from PIL import Image
-import io
-import base64
-import plotly.express as px
-import plotly.graph_objects as go
-from utils.data_generator import generate_random_text
-import tempfile
-import os
+from datetime import datetime, timedelta
+import random
 
-# Page configuration
-st.set_page_config(page_title="File Upload & Processing", page_icon="📁", layout="wide")
-
-def main():
-    st.title("📁 File Upload & Processing")
-    st.markdown("Upload and process various file types including CSV, images, and text files.")
-    
-    # File type selection
-    file_type = st.sidebar.selectbox(
-        "Select File Type",
-        ["CSV Files", "Image Files", "Text Files", "Excel Files", "JSON Files"]
-    )
-    
-    if file_type == "CSV Files":
-        handle_csv_upload()
-    elif file_type == "Image Files":
-        handle_image_upload()
-    elif file_type == "Text Files":
-        handle_text_upload()
-    elif file_type == "Excel Files":
-        handle_excel_upload()
-    elif file_type == "JSON Files":
-        handle_json_upload()
-
-def handle_csv_upload():
-    st.markdown("### 📊 CSV File Upload & Analysis")
-    
-    uploaded_file = st.file_uploader(
-        "Choose a CSV file",
-        type=['csv'],
-        help="Upload a CSV file to analyze"
-    )
-    
-    if uploaded_file is not None:
-        try:
-            # Read CSV file
-            df = pd.read_csv(uploaded_file)
-            
-            # Display file info
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Rows", len(df))
-            with col2:
-                st.metric("Columns", len(df.columns))
-            with col3:
-                st.metric("File Size", f"{uploaded_file.size / 1024:.1f} KB")
-            
-            # Data preview
-            st.markdown("#### 📋 Data Preview")
-            st.dataframe(df.head(10))
-            
-            # Data analysis
-            st.markdown("#### 📈 Data Analysis")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Data Types:**")
-                st.write(df.dtypes)
-                
-                st.markdown("**Missing Values:**")
-                missing_data = df.isnull().sum()
-                st.write(missing_data[missing_data > 0])
-            
-            with col2:
-                st.markdown("**Numeric Columns Summary:**")
-                numeric_cols = df.select_dtypes(include=[np.number]).columns
-                if len(numeric_cols) > 0:
-                    st.write(df[numeric_cols].describe())
-                else:
-                    st.info("No numeric columns found")
-            
-            # Visualization options
-            st.markdown("#### 📊 Visualizations")
-            
-            viz_type = st.selectbox(
-                "Select Visualization",
-                ["Correlation Heatmap", "Distribution Plots", "Scatter Matrix", "Custom Plot"]
-            )
-            
-            if viz_type == "Correlation Heatmap":
-                if len(numeric_cols) > 1:
-                    corr_matrix = df[numeric_cols].corr()
-                    fig = px.imshow(corr_matrix, 
-                                   title="Correlation Matrix",
-                                   color_continuous_scale='RdBu')
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.warning("Need at least 2 numeric columns for correlation heatmap")
-            
-            elif viz_type == "Distribution Plots":
-                if len(numeric_cols) > 0:
-                    selected_col = st.selectbox("Select column for distribution", numeric_cols)
-                    fig = px.histogram(df, x=selected_col, title=f"Distribution of {selected_col}")
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.warning("No numeric columns available")
-            
-            elif viz_type == "Scatter Matrix":
-                if len(numeric_cols) >= 2:
-                    selected_cols = st.multiselect("Select columns for scatter matrix", numeric_cols, default=numeric_cols[:3])
-                    if len(selected_cols) >= 2:
-                        fig = px.scatter_matrix(df[selected_cols])
-                        st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.warning("Need at least 2 numeric columns for scatter matrix")
-            
-            elif viz_type == "Custom Plot":
-                col1, col2 = st.columns(2)
-                with col1:
-                    x_col = st.selectbox("Select X column", df.columns)
-                with col2:
-                    y_col = st.selectbox("Select Y column", df.columns)
-                
-                plot_type = st.selectbox("Select plot type", ["scatter", "line", "bar"])
-                
-                if plot_type == "scatter":
-                    fig = px.scatter(df, x=x_col, y=y_col, title=f"{x_col} vs {y_col}")
-                elif plot_type == "line":
-                    fig = px.line(df, x=x_col, y=y_col, title=f"{x_col} vs {y_col}")
-                elif plot_type == "bar":
-                    fig = px.bar(df, x=x_col, y=y_col, title=f"{x_col} vs {y_col}")
-                
-                st.plotly_chart(fig, use_container_width=True)
-            
-            # Data processing options
-            st.markdown("#### 🔧 Data Processing")
-            
-            process_option = st.selectbox(
-                "Select Processing Option",
-                ["None", "Remove Missing Values", "Fill Missing Values", "Normalize Data", "Filter Data"]
-            )
-            
-            if process_option == "Remove Missing Values":
-                df_processed = df.dropna()
-                st.success(f"Removed {len(df) - len(df_processed)} rows with missing values")
-                st.dataframe(df_processed.head())
-                
-            elif process_option == "Fill Missing Values":
-                fill_method = st.selectbox("Select fill method", ["mean", "median", "mode", "forward fill"])
-                df_processed = df.copy()
-                
-                for col in numeric_cols:
-                    if df_processed[col].isnull().any():
-                        if fill_method == "mean":
-                            df_processed[col].fillna(df_processed[col].mean(), inplace=True)
-                        elif fill_method == "median":
-                            df_processed[col].fillna(df_processed[col].median(), inplace=True)
-                        elif fill_method == "mode":
-                            df_processed[col].fillna(df_processed[col].mode()[0], inplace=True)
-                        elif fill_method == "forward fill":
-                            df_processed[col].fillna(method='ffill', inplace=True)
-                
-                st.success("Missing values filled")
-                st.dataframe(df_processed.head())
-                
-            elif process_option == "Normalize Data":
-                if len(numeric_cols) > 0:
-                    from sklearn.preprocessing import StandardScaler
-                    scaler = StandardScaler()
-                    df_normalized = df.copy()
-                    df_normalized[numeric_cols] = scaler.fit_transform(df[numeric_cols])
-                    st.success("Data normalized using StandardScaler")
-                    st.dataframe(df_normalized.head())
-                else:
-                    st.warning("No numeric columns to normalize")
-                    
-            elif process_option == "Filter Data":
-                filter_col = st.selectbox("Select column to filter", df.columns)
-                if df[filter_col].dtype in ['int64', 'float64']:
-                    min_val = st.number_input("Minimum value", value=float(df[filter_col].min()))
-                    max_val = st.number_input("Maximum value", value=float(df[filter_col].max()))
-                    df_filtered = df[(df[filter_col] >= min_val) & (df[filter_col] <= max_val)]
-                    st.success(f"Filtered to {len(df_filtered)} rows")
-                    st.dataframe(df_filtered.head())
-                else:
-                    unique_vals = df[filter_col].unique()
-                    selected_vals = st.multiselect("Select values to keep", unique_vals)
-                    if selected_vals:
-                        df_filtered = df[df[filter_col].isin(selected_vals)]
-                        st.success(f"Filtered to {len(df_filtered)} rows")
-                        st.dataframe(df_filtered.head())
-            
-            # Download processed data
-            st.markdown("#### 💾 Download Options")
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Download Original Data"):
-                    csv = df.to_csv(index=False)
-                    st.download_button(
-                        label="Download CSV",
-                        data=csv,
-                        file_name="original_data.csv",
-                        mime="text/csv"
-                    )
-            
-            with col2:
-                if 'df_processed' in locals():
-                    if st.button("Download Processed Data"):
-                        csv = df_processed.to_csv(index=False)
-                        st.download_button(
-                            label="Download CSV",
-                            data=csv,
-                            file_name="processed_data.csv",
-                            mime="text/csv"
-                        )
-                        
-        except Exception as e:
-            st.error(f"Error processing CSV file: {e}")
-
-def handle_image_upload():
-    st.markdown("### 🖼️ Image File Upload & Processing")
-    
-    uploaded_file = st.file_uploader(
-        "Choose an image file",
-        type=['png', 'jpg', 'jpeg', 'gif', 'bmp'],
-        help="Upload an image file to process"
-    )
-    
-    if uploaded_file is not None:
-        try:
-            # Load image
-            image = Image.open(uploaded_file)
-            
-            # Display image info
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Width", f"{image.width}px")
-            with col2:
-                st.metric("Height", f"{image.height}px")
-            with col3:
-                st.metric("Mode", image.mode)
-            with col4:
-                st.metric("File Size", f"{uploaded_file.size / 1024:.1f} KB")
-            
-            # Display original image
-            st.markdown("#### 📸 Original Image")
-            st.image(image, caption="Original Image", use_column_width=True)
-            
-            # Image processing options
-            st.markdown("#### 🔧 Image Processing")
-            
-            process_option = st.selectbox(
-                "Select Processing Option",
-                ["None", "Resize", "Convert to Grayscale", "Rotate", "Apply Filters", "Crop"]
-            )
-            
-            processed_image = image.copy()
-            
-            if process_option == "Resize":
-                col1, col2 = st.columns(2)
-                with col1:
-                    new_width = st.number_input("New Width", value=image.width, min_value=1)
-                with col2:
-                    new_height = st.number_input("New Height", value=image.height, min_value=1)
-                
-                processed_image = image.resize((new_width, new_height))
-                st.image(processed_image, caption="Resized Image", use_column_width=True)
-                
-            elif process_option == "Convert to Grayscale":
-                processed_image = image.convert('L')
-                st.image(processed_image, caption="Grayscale Image", use_column_width=True)
-                
-            elif process_option == "Rotate":
-                angle = st.slider("Rotation Angle", -180, 180, 0)
-                processed_image = image.rotate(angle)
-                st.image(processed_image, caption=f"Rotated Image ({angle}°)", use_column_width=True)
-                
-            elif process_option == "Apply Filters":
-                filter_type = st.selectbox("Select Filter", ["Blur", "Sharpen", "Emboss", "Find Edges"])
-                
-                if filter_type == "Blur":
-                    from PIL import ImageFilter
-                    processed_image = image.filter(ImageFilter.BLUR)
-                elif filter_type == "Sharpen":
-                    from PIL import ImageFilter
-                    processed_image = image.filter(ImageFilter.SHARPEN)
-                elif filter_type == "Emboss":
-                    from PIL import ImageFilter
-                    processed_image = image.filter(ImageFilter.EMBOSS)
-                elif filter_type == "Find Edges":
-                    from PIL import ImageFilter
-                    processed_image = image.filter(ImageFilter.FIND_EDGES)
-                
-                st.image(processed_image, caption=f"{filter_type} Filter", use_column_width=True)
-                
-            elif process_option == "Crop":
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    left = st.number_input("Left", value=0, max_value=image.width)
-                with col2:
-                    top = st.number_input("Top", value=0, max_value=image.height)
-                with col3:
-                    right = st.number_input("Right", value=image.width, max_value=image.width)
-                with col4:
-                    bottom = st.number_input("Bottom", value=image.height, max_value=image.height)
-                
-                processed_image = image.crop((left, top, right, bottom))
-                st.image(processed_image, caption="Cropped Image", use_column_width=True)
-            
-            # Image analysis
-            st.markdown("#### 📊 Image Analysis")
-            
-            # Convert to numpy array for analysis
-            img_array = np.array(processed_image)
-            
-            if len(img_array.shape) == 3:  # Color image
-                # RGB histogram
-                fig = go.Figure()
-                colors = ['red', 'green', 'blue']
-                for i, color in enumerate(colors):
-                    hist, bins = np.histogram(img_array[:, :, i].flatten(), bins=256, range=[0, 256])
-                    fig.add_trace(go.Scatter(x=bins[:-1], y=hist, name=f'{color.upper()} Channel'))
-                
-                fig.update_layout(title="RGB Histogram", xaxis_title="Pixel Value", yaxis_title="Frequency")
-                st.plotly_chart(fig, use_container_width=True)
-                
-            else:  # Grayscale image
-                hist, bins = np.histogram(img_array.flatten(), bins=256, range=[0, 256])
-                fig = px.bar(x=bins[:-1], y=hist, title="Grayscale Histogram")
-                fig.update_layout(xaxis_title="Pixel Value", yaxis_title="Frequency")
-                st.plotly_chart(fig, use_container_width=True)
-            
-            # Download processed image
-            st.markdown("#### 💾 Download Processed Image")
-            
-            if st.button("Download Processed Image"):
-                # Convert PIL image to bytes
-                img_byte_arr = io.BytesIO()
-                processed_image.save(img_byte_arr, format='PNG')
-                img_byte_arr = img_byte_arr.getvalue()
-                
-                st.download_button(
-                    label="Download PNG",
-                    data=img_byte_arr,
-                    file_name="processed_image.png",
-                    mime="image/png"
-                )
-                
-        except Exception as e:
-            st.error(f"Error processing image file: {e}")
-
-def handle_text_upload():
-    st.markdown("### 📝 Text File Upload & Analysis")
-    
-    uploaded_file = st.file_uploader(
-        "Choose a text file",
-        type=['txt', 'md', 'py', 'js', 'html', 'css'],
-        help="Upload a text file to analyze"
-    )
-    
-    if uploaded_file is not None:
-        try:
-            # Read text file
-            text_content = uploaded_file.read().decode('utf-8')
-            
-            # Display file info
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Characters", len(text_content))
-            with col2:
-                st.metric("Words", len(text_content.split()))
-            with col3:
-                st.metric("Lines", len(text_content.splitlines()))
-            
-            # Text preview
-            st.markdown("#### 📋 Text Preview")
-            st.text_area("File Content", text_content, height=200)
-            
-            # Text analysis
-            st.markdown("#### 📊 Text Analysis")
-            
-            # Word frequency
-            words = text_content.lower().split()
-            word_freq = pd.Series(words).value_counts().head(20)
-            
-            fig = px.bar(x=word_freq.index, y=word_freq.values, title="Most Common Words")
-            fig.update_layout(xaxis_title="Words", yaxis_title="Frequency")
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Character frequency
-            char_freq = pd.Series(list(text_content.lower())).value_counts().head(20)
-            
-            fig2 = px.bar(x=char_freq.index, y=char_freq.values, title="Most Common Characters")
-            fig2.update_layout(xaxis_title="Characters", yaxis_title="Frequency")
-            st.plotly_chart(fig2, use_container_width=True)
-            
-            # Text statistics
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Text Statistics:**")
-                st.write(f"Average word length: {np.mean([len(word) for word in words]):.2f}")
-                st.write(f"Longest word: {max(words, key=len)}")
-                st.write(f"Shortest word: {min(words, key=len)}")
-                st.write(f"Unique words: {len(set(words))}")
-            
-            with col2:
-                st.markdown("**File Statistics:**")
-                st.write(f"File size: {uploaded_file.size} bytes")
-                st.write(f"Encoding: UTF-8")
-                st.write(f"File type: {uploaded_file.type}")
-            
-            # Text processing options
-            st.markdown("#### 🔧 Text Processing")
-            
-            process_option = st.selectbox(
-                "Select Processing Option",
-                ["None", "Convert to Uppercase", "Convert to Lowercase", "Remove Punctuation", "Word Count", "Generate Summary"]
-            )
-            
-            processed_text = text_content
-            
-            if process_option == "Convert to Uppercase":
-                processed_text = text_content.upper()
-                st.text_area("Processed Text", processed_text, height=200)
-                
-            elif process_option == "Convert to Lowercase":
-                processed_text = text_content.lower()
-                st.text_area("Processed Text", processed_text, height=200)
-                
-            elif process_option == "Remove Punctuation":
-                import string
-                processed_text = text_content.translate(str.maketrans("", "", string.punctuation))
-                st.text_area("Processed Text", processed_text, height=200)
-                
-            elif process_option == "Word Count":
-                word_count = {}
-                for word in words:
-                    word_count[word] = word_count.get(word, 0) + 1
-                
-                word_count_df = pd.DataFrame(list(word_count.items()), columns=['Word', 'Count'])
-                word_count_df = word_count_df.sort_values('Count', ascending=False)
-                
-                st.dataframe(word_count_df.head(20))
-                
-            elif process_option == "Generate Summary":
-                # Simple summary: first few sentences
-                sentences = text_content.split('.')
-                summary = '. '.join(sentences[:3]) + '.'
-                st.text_area("Generated Summary", summary, height=100)
-            
-            # Download processed text
-            st.markdown("#### 💾 Download Options")
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Download Original Text"):
-                    st.download_button(
-                        label="Download TXT",
-                        data=text_content,
-                        file_name="original_text.txt",
-                        mime="text/plain"
-                    )
-            
-            with col2:
-                if st.button("Download Processed Text"):
-                    st.download_button(
-                        label="Download TXT",
-                        data=processed_text,
-                        file_name="processed_text.txt",
-                        mime="text/plain"
-                    )
-                    
-        except Exception as e:
-            st.error(f"Error processing text file: {e}")
-
-def handle_excel_upload():
-    st.markdown("### 📊 Excel File Upload & Analysis")
-    
-    uploaded_file = st.file_uploader(
-        "Choose an Excel file",
-        type=['xlsx', 'xls'],
-        help="Upload an Excel file to analyze"
-    )
-    
-    if uploaded_file is not None:
-        try:
-            # Read Excel file
-            excel_file = pd.ExcelFile(uploaded_file)
-            sheet_names = excel_file.sheet_names
-            
-            # Select sheet
-            selected_sheet = st.selectbox("Select Sheet", sheet_names)
-            df = pd.read_excel(uploaded_file, sheet_name=selected_sheet)
-            
-            # Display file info
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Rows", len(df))
-            with col2:
-                st.metric("Columns", len(df.columns))
-            with col3:
-                st.metric("Sheets", len(sheet_names))
-            
-            # Data preview
-            st.markdown("#### 📋 Data Preview")
-            st.dataframe(df.head(10))
-            
-            # Basic analysis similar to CSV
-            st.markdown("#### 📈 Basic Analysis")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Data Types:**")
-                st.write(df.dtypes)
-            
-            with col2:
-                st.markdown("**Numeric Summary:**")
-                numeric_cols = df.select_dtypes(include=[np.number]).columns
-                if len(numeric_cols) > 0:
-                    st.write(df[numeric_cols].describe())
-                else:
-                    st.info("No numeric columns found")
-            
-            # Download as CSV
-            st.markdown("#### 💾 Download as CSV")
-            if st.button("Download as CSV"):
-                csv = df.to_csv(index=False)
-                st.download_button(
-                    label="Download CSV",
-                    data=csv,
-                    file_name=f"{selected_sheet}.csv",
-                    mime="text/csv"
-                )
-                
-        except Exception as e:
-            st.error(f"Error processing Excel file: {e}")
-
-def handle_json_upload():
-    st.markdown("### 📄 JSON File Upload & Analysis")
-    
-    uploaded_file = st.file_uploader(
-        "Choose a JSON file",
-        type=['json'],
-        help="Upload a JSON file to analyze"
-    )
-    
-    if uploaded_file is not None:
-        try:
-            # Read JSON file
-            import json
-            json_data = json.load(uploaded_file)
-            
-            # Display file info
-            st.metric("File Size", f"{uploaded_file.size / 1024:.1f} KB")
-            
-            # Display JSON structure
-            st.markdown("#### 📋 JSON Structure")
-            st.json(json_data)
-            
-            # Convert to DataFrame if possible
-            if isinstance(json_data, list) and len(json_data) > 0:
-                df = pd.json_normalize(json_data)
-                
-                st.markdown("#### 📊 Data Analysis")
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.metric("Rows", len(df))
-                    st.metric("Columns", len(df.columns))
-                
-                with col2:
-                    st.markdown("**Columns:**")
-                    st.write(list(df.columns))
-                
-                # Data preview
-                st.markdown("#### 📋 Data Preview")
-                st.dataframe(df.head(10))
-                
-                # Download as CSV
-                st.markdown("#### 💾 Download as CSV")
-                if st.button("Download as CSV"):
-                    csv = df.to_csv(index=False)
-                    st.download_button(
-                        label="Download CSV",
-                        data=csv,
-                        file_name="json_data.csv",
-                        mime="text/csv"
-                    )
-            else:
-                st.info("JSON data is not in a list format suitable for tabular display")
-                
-        except Exception as e:
-            st.error(f"Error processing JSON file: {e}")
-
-if __name__ == "__main__":
-    main() 
-
-
-
-
-
-
-
-
-
-
-
-    --------------------------------------------ml_demo-----------------------------------------------------------------
-    import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-import seaborn as sns
-import matplotlib.pyplot as plt
-from utils.data_generator import generate_ml_dataset
-
-# Page configuration
-st.set_page_config(page_title="Machine Learning Demo", page_icon="🤖", layout="wide")
-
-def main():
-    st.title("🤖 Machine Learning Demo")
-    st.markdown("Explore various machine learning algorithms and their applications.")
-    
-    # Sidebar for ML model selection
-    st.sidebar.header("🎛️ ML Model Selection")
-    
-    ml_task = st.sidebar.selectbox(
-        "Select ML Task",
-        ["Classification", "Regression", "Clustering", "Dimensionality Reduction", "Model Comparison"]
-    )
-    
-    if ml_task == "Classification":
-        handle_classification()
-    elif ml_task == "Regression":
-        handle_regression()
-    elif ml_task == "Clustering":
-        handle_clustering()
-    elif ml_task == "Dimensionality Reduction":
-        handle_dimensionality_reduction()
-    elif ml_task == "Model Comparison":
-        handle_model_comparison()
-
-def handle_classification():
-    st.markdown("### 🎯 Classification Task")
-    st.markdown("Predict loan approval based on customer features.")
-    
-    # Load dataset
-    df = generate_ml_dataset(1000)
-    
-    # Display dataset info
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Samples", len(df))
-    with col2:
-        st.metric("Features", len(df.columns) - 2)  # Exclude target and probability
-    with col3:
-        st.metric("Approval Rate", f"{(df['loan_approved'].sum() / len(df)) * 100:.1f}%")
-    
-    # Data exploration
-    st.markdown("#### 📊 Data Exploration")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Feature distributions
-        selected_feature = st.selectbox("Select Feature to Visualize", 
-                                       ['age', 'income', 'education_years', 'credit_score'])
-        
-        fig = px.histogram(df, x=selected_feature, color='loan_approved',
-                          title=f"Distribution of {selected_feature} by Loan Approval",
-                          barmode='overlay', opacity=0.7)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        # Correlation with target
-        correlations = df[['age', 'income', 'education_years', 'credit_score', 'loan_approved']].corr()['loan_approved'].drop('loan_approved')
-        
-        fig2 = px.bar(x=correlations.index, y=correlations.values,
-                     title="Feature Correlation with Loan Approval")
-        fig2.update_layout(xaxis_title="Features", yaxis_title="Correlation")
-        st.plotly_chart(fig2, use_container_width=True)
-    
-    # Model training
-    st.markdown("#### 🤖 Model Training")
-    
-    # Prepare data
-    X = df[['age', 'income', 'education_years', 'credit_score']]
-    y = df['loan_approved']
-    
-    # Split data
-    test_size = st.slider("Test Set Size (%)", 10, 40, 20) / 100
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
-    
-    # Model selection
-    model_type = st.selectbox("Select Model", ["Logistic Regression", "Random Forest"])
-    
-    if model_type == "Logistic Regression":
-        model = LogisticRegression(random_state=42)
-    else:
-        n_estimators = st.slider("Number of Trees", 10, 200, 100)
-        model = RandomForestClassifier(n_estimators=n_estimators, random_state=42)
-    
-    # Train model
-    if st.button("Train Model"):
-        with st.spinner("Training model..."):
-            model.fit(X_train, y_train)
-            
-            # Make predictions
-            y_pred = model.predict(X_test)
-            y_pred_proba = model.predict_proba(X_test)[:, 1]
-            
-            # Model evaluation
-            accuracy = accuracy_score(y_test, y_pred)
-            
-            # Display results
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Accuracy", f"{accuracy:.3f}")
-            with col2:
-                st.metric("Training Samples", len(X_train))
-            with col3:
-                st.metric("Test Samples", len(X_test))
-            
-            # Confusion matrix
-            st.markdown("#### 📊 Model Performance")
-            
-            cm = confusion_matrix(y_test, y_pred)
-            fig = px.imshow(cm, 
-                           labels=dict(x="Predicted", y="Actual", color="Count"),
-                           x=['Not Approved', 'Approved'],
-                           y=['Not Approved', 'Approved'],
-                           title="Confusion Matrix",
-                           color_continuous_scale='Blues')
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Classification report
-            st.markdown("#### 📋 Classification Report")
-            report = classification_report(y_test, y_pred, output_dict=True)
-            report_df = pd.DataFrame(report).transpose()
-            st.dataframe(report_df)
-            
-            # Feature importance
-            if model_type == "Random Forest":
-                st.markdown("#### 🎯 Feature Importance")
-                feature_importance = pd.DataFrame({
-                    'Feature': X.columns,
-                    'Importance': model.feature_importances_
-                }).sort_values('Importance', ascending=False)
-                
-                fig3 = px.bar(feature_importance, x='Feature', y='Importance',
-                            title="Feature Importance")
-                st.plotly_chart(fig3, use_container_width=True)
-            
-            # Prediction interface
-            st.markdown("#### 🔮 Make Predictions")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                age = st.number_input("Age", min_value=18, max_value=80, value=30)
-                income = st.number_input("Income", min_value=20000, max_value=200000, value=50000)
-            
-            with col2:
-                education = st.number_input("Education Years", min_value=8, max_value=20, value=14)
-                credit_score = st.number_input("Credit Score", min_value=300, max_value=850, value=700)
-            
-            if st.button("Predict Loan Approval"):
-                sample = np.array([[age, income, education, credit_score]])
-                prediction = model.predict(sample)[0]
-                probability = model.predict_proba(sample)[0][1]
-                
-                st.success(f"**Prediction:** {'Approved' if prediction == 1 else 'Not Approved'}")
-                st.info(f"**Approval Probability:** {probability:.3f}")
-
-def handle_regression():
-    st.markdown("### 📈 Regression Task")
-    st.markdown("Predict house prices based on various features.")
-    
-    # Generate regression dataset
+@st.cache_data
+def generate_sample_sales_data(rows=1000):
+    """Generate sample sales data with caching for performance."""
     np.random.seed(42)
-    n_samples = 1000
+    
+    # Generate dates
+    start_date = datetime(2023, 1, 1)
+    dates = [start_date + timedelta(days=i) for i in range(rows)]
+    
+    # Generate product categories
+    categories = ['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports']
+    
+    # Generate regions
+    regions = ['North', 'South', 'East', 'West', 'Central']
+    
+    data = {
+        'date': dates,
+        'product_category': np.random.choice(categories, rows),
+        'region': np.random.choice(regions, rows),
+        'sales_amount': np.random.normal(1000, 300, rows),
+        'quantity_sold': np.random.poisson(50, rows),
+        'customer_rating': np.random.uniform(1, 5, rows),
+        'discount_percent': np.random.uniform(0, 30, rows)
+    }
+    
+    df = pd.DataFrame(data)
+    df['sales_amount'] = df['sales_amount'].abs()  # Ensure positive values
+    df['customer_rating'] = df['customer_rating'].round(1)
+    df['discount_percent'] = df['discount_percent'].round(1)
+    
+    return df
+
+@st.cache_data
+def generate_time_series_data(periods=100):
+    """Generate time series data for real-time demonstrations."""
+    np.random.seed(42)
+    
+    # Generate time index
+    base_time = datetime.now() - timedelta(hours=periods)
+    time_index = [base_time + timedelta(minutes=i*15) for i in range(periods)]
+    
+    # Generate trend with noise
+    trend = np.linspace(100, 150, periods)
+    noise = np.random.normal(0, 5, periods)
+    values = trend + noise
+    
+    data = {
+        'timestamp': time_index,
+        'value': values,
+        'moving_average': pd.Series(values).rolling(window=5).mean().fillna(method='bfill'),
+        'volatility': np.random.exponential(2, periods)
+    }
+    
+    return pd.DataFrame(data)
+
+@st.cache_data
+def generate_user_activity_data(users=50, days=30):
+    """Generate user activity data for analytics."""
+    np.random.seed(42)
+    
+    user_ids = [f"user_{i:03d}" for i in range(1, users + 1)]
+    dates = pd.date_range(start='2023-01-01', periods=days, freq='D')
+    
+    data = []
+    for user_id in user_ids:
+        for date in dates:
+            # Simulate user activity patterns
+            is_weekend = date.weekday() >= 5
+            base_activity = 10 if is_weekend else 5
+            
+            data.append({
+                'user_id': user_id,
+                'date': date,
+                'page_views': np.random.poisson(base_activity),
+                'session_duration': np.random.exponential(300),  # seconds
+                'bounce_rate': np.random.beta(2, 8),  # 0-1
+                'conversion_rate': np.random.beta(1, 20)  # 0-1
+            })
+    
+    return pd.DataFrame(data)
+
+@st.cache_data
+def generate_ml_dataset(samples=1000):
+    """Generate dataset for machine learning demonstrations."""
+    np.random.seed(42)
     
     # Generate features
-    square_feet = np.random.normal(2000, 500, n_samples)
-    bedrooms = np.random.poisson(3, n_samples)
-    bathrooms = np.random.poisson(2, n_samples)
-    age = np.random.exponential(20, n_samples)
-    distance_to_city = np.random.exponential(10, n_samples)
+    age = np.random.normal(35, 12, samples)
+    income = np.random.normal(50000, 20000, samples)
+    education_years = np.random.normal(14, 3, samples)
+    credit_score = np.random.normal(700, 100, samples)
     
-    # Generate target (house price)
-    base_price = 200000
-    price = (base_price + 
-             square_feet * 100 + 
-             bedrooms * 25000 + 
-             bathrooms * 15000 - 
-             age * 2000 - 
-             distance_to_city * 5000 + 
-             np.random.normal(0, 20000, n_samples))
-    
-    df = pd.DataFrame({
-        'square_feet': square_feet,
-        'bedrooms': bedrooms,
-        'bathrooms': bathrooms,
-        'age': age,
-        'distance_to_city': distance_to_city,
-        'price': price
-    })
-    
-    # Display dataset info
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Samples", len(df))
-    with col2:
-        st.metric("Features", len(df.columns) - 1)
-    with col3:
-        st.metric("Avg Price", f"${df['price'].mean():,.0f}")
-    
-    # Data exploration
-    st.markdown("#### 📊 Data Exploration")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Price distribution
-        fig = px.histogram(df, x='price', title="House Price Distribution")
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        # Correlation matrix
-        corr_matrix = df.corr()
-        fig2 = px.imshow(corr_matrix, 
-                        title="Feature Correlation Matrix",
-                        color_continuous_scale='RdBu')
-        st.plotly_chart(fig2, use_container_width=True)
-    
-    # Model training
-    st.markdown("#### 🤖 Model Training")
-    
-    # Prepare data
-    X = df.drop('price', axis=1)
-    y = df['price']
-    
-    # Split data
-    test_size = st.slider("Test Set Size (%)", 10, 40, 20) / 100
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
-    
-    # Model selection
-    model_type = st.selectbox("Select Model", ["Linear Regression", "Random Forest"])
-    
-    if model_type == "Linear Regression":
-        model = LinearRegression()
-    else:
-        n_estimators = st.slider("Number of Trees", 10, 200, 100)
-        model = RandomForestRegressor(n_estimators=n_estimators, random_state=42)
-    
-    # Train model
-    if st.button("Train Model"):
-        with st.spinner("Training model..."):
-            model.fit(X_train, y_train)
-            
-            # Make predictions
-            y_pred = model.predict(X_test)
-            
-            # Model evaluation
-            mse = mean_squared_error(y_test, y_pred)
-            rmse = np.sqrt(mse)
-            r2 = r2_score(y_test, y_pred)
-            
-            # Display results
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("R² Score", f"{r2:.3f}")
-            with col2:
-                st.metric("RMSE", f"${rmse:,.0f}")
-            with col3:
-                st.metric("Training Samples", len(X_train))
-            
-            # Prediction vs Actual plot
-            st.markdown("#### 📊 Model Performance")
-            
-            fig = px.scatter(x=y_test, y=y_pred,
-                           title="Predicted vs Actual House Prices",
-                           labels={'x': 'Actual Price', 'y': 'Predicted Price'})
-            
-            # Add perfect prediction line
-            min_val = min(y_test.min(), y_pred.min())
-            max_val = max(y_test.max(), y_pred.max())
-            fig.add_trace(go.Scatter(x=[min_val, max_val], y=[min_val, max_val],
-                                   mode='lines', name='Perfect Prediction',
-                                   line=dict(color='red', dash='dash')))
-            
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Residuals plot
-            residuals = y_test - y_pred
-            fig2 = px.scatter(x=y_pred, y=residuals,
-                            title="Residuals Plot",
-                            labels={'x': 'Predicted Price', 'y': 'Residuals'})
-            
-            # Add zero line
-            fig2.add_hline(y=0, line_dash="dash", line_color="red")
-            
-            st.plotly_chart(fig2, use_container_width=True)
-            
-            # Feature importance (for Random Forest)
-            if model_type == "Random Forest":
-                st.markdown("#### 🎯 Feature Importance")
-                feature_importance = pd.DataFrame({
-                    'Feature': X.columns,
-                    'Importance': model.feature_importances_
-                }).sort_values('Importance', ascending=False)
-                
-                fig3 = px.bar(feature_importance, x='Feature', y='Importance',
-                            title="Feature Importance")
-                st.plotly_chart(fig3, use_container_width=True)
-            
-            # Prediction interface
-            st.markdown("#### 🔮 Make Predictions")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                square_feet = st.number_input("Square Feet", min_value=500, max_value=5000, value=2000)
-                bedrooms = st.number_input("Bedrooms", min_value=1, max_value=10, value=3)
-                bathrooms = st.number_input("Bathrooms", min_value=1, max_value=5, value=2)
-            
-            with col2:
-                age = st.number_input("House Age (years)", min_value=0, max_value=100, value=20)
-                distance_to_city = st.number_input("Distance to City (miles)", min_value=0, max_value=50, value=10)
-            
-            if st.button("Predict House Price"):
-                sample = np.array([[square_feet, bedrooms, bathrooms, age, distance_to_city]])
-                prediction = model.predict(sample)[0]
-                
-                st.success(f"**Predicted House Price:** ${prediction:,.0f}")
-
-def handle_clustering():
-    st.markdown("### 🎯 Clustering Analysis")
-    st.markdown("Customer segmentation using K-means clustering.")
-    
-    # Generate customer data
-    np.random.seed(42)
-    n_samples = 500
-    
-    # Generate customer features
-    age = np.random.normal(35, 12, n_samples)
-    income = np.random.normal(50000, 20000, n_samples)
-    spending_score = np.random.normal(50, 20, n_samples)
-    loyalty_years = np.random.exponential(5, n_samples)
-    
-    df = pd.DataFrame({
-        'age': age,
-        'income': income,
-        'spending_score': spending_score,
-        'loyalty_years': loyalty_years
-    })
-    
-    # Display dataset info
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Customers", len(df))
-    with col2:
-        st.metric("Features", len(df.columns))
-    with col3:
-        st.metric("Avg Age", f"{df['age'].mean():.1f}")
-    
-    # Data exploration
-    st.markdown("#### 📊 Data Exploration")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Age vs Income scatter
-        fig = px.scatter(df, x='age', y='income', title="Age vs Income")
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        # Spending vs Loyalty scatter
-        fig2 = px.scatter(df, x='spending_score', y='loyalty_years', title="Spending Score vs Loyalty Years")
-        st.plotly_chart(fig2, use_container_width=True)
-    
-    # Clustering parameters
-    st.markdown("#### 🎯 Clustering Parameters")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        n_clusters = st.slider("Number of Clusters", 2, 8, 4)
-    
-    with col2:
-        features_for_clustering = st.multiselect(
-            "Select Features for Clustering",
-            df.columns,
-            default=['age', 'income', 'spending_score']
-        )
-    
-    # Perform clustering
-    if st.button("Perform Clustering") and len(features_for_clustering) > 0:
-        with st.spinner("Performing clustering..."):
-            # Prepare data
-            X = df[features_for_clustering]
-            
-            # Standardize features
-            scaler = StandardScaler()
-            X_scaled = scaler.fit_transform(X)
-            
-            # Perform K-means clustering
-            kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-            df['cluster'] = kmeans.fit_predict(X_scaled)
-            
-            # Display results
-            st.markdown("#### 📊 Clustering Results")
-            
-            # Cluster distribution
-            cluster_counts = df['cluster'].value_counts().sort_index()
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                fig = px.pie(values=cluster_counts.values, names=[f"Cluster {i}" for i in cluster_counts.index],
-                           title="Cluster Distribution")
-                st.plotly_chart(fig, use_container_width=True)
-            
-            with col2:
-                fig2 = px.bar(x=[f"Cluster {i}" for i in cluster_counts.index], y=cluster_counts.values,
-                            title="Cluster Sizes")
-                st.plotly_chart(fig2, use_container_width=True)
-            
-            # Feature analysis by cluster
-            st.markdown("#### 📈 Cluster Characteristics")
-            
-            # Create subplots for each feature
-            n_features = len(features_for_clustering)
-            fig = make_subplots(rows=1, cols=n_features, subplot_titles=features_for_clustering)
-            
-            for i, feature in enumerate(features_for_clustering, 1):
-                cluster_means = df.groupby('cluster')[feature].mean()
-                fig.add_trace(
-                    go.Bar(x=[f"Cluster {j}" for j in cluster_means.index], 
-                           y=cluster_means.values,
-                           name=feature),
-                    row=1, col=i
-                )
-            
-            fig.update_layout(height=400, title_text="Average Feature Values by Cluster")
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # 3D scatter plot (if 3 features selected)
-            if len(features_for_clustering) >= 3:
-                st.markdown("#### 🌐 3D Cluster Visualization")
-                
-                fig3 = px.scatter_3d(df, x=features_for_clustering[0], 
-                                   y=features_for_clustering[1], 
-                                   z=features_for_clustering[2],
-                                   color='cluster',
-                                   title="3D Cluster Visualization")
-                st.plotly_chart(fig3, use_container_width=True)
-            
-            # Cluster profiles
-            st.markdown("#### 👥 Customer Segments")
-            
-            cluster_profiles = df.groupby('cluster').agg({
-                'age': 'mean',
-                'income': 'mean',
-                'spending_score': 'mean',
-                'loyalty_years': 'mean'
-            }).round(2)
-            
-            st.dataframe(cluster_profiles)
-            
-            # Customer assignment
-            st.markdown("#### 🔍 Assign Customer to Cluster")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                customer_age = st.number_input("Customer Age", min_value=18, max_value=80, value=30)
-                customer_income = st.number_input("Customer Income", min_value=20000, max_value=200000, value=50000)
-            
-            with col2:
-                customer_spending = st.number_input("Spending Score", min_value=0, max_value=100, value=50)
-                customer_loyalty = st.number_input("Loyalty Years", min_value=0, max_value=20, value=5)
-            
-            if st.button("Assign Customer"):
-                customer_data = np.array([[customer_age, customer_income, customer_spending, customer_loyalty]])
-                customer_scaled = scaler.transform(customer_data[:, :len(features_for_clustering)])
-                assigned_cluster = kmeans.predict(customer_scaled)[0]
-                
-                st.success(f"**Customer assigned to Cluster {assigned_cluster}**")
-
-def handle_dimensionality_reduction():
-    st.markdown("### 📉 Dimensionality Reduction")
-    st.markdown("Reduce high-dimensional data using Principal Component Analysis (PCA).")
-    
-    # Generate high-dimensional data
-    np.random.seed(42)
-    n_samples = 200
-    n_features = 10
-    
-    # Generate correlated features
-    base_feature = np.random.normal(0, 1, n_samples)
-    
-    data = {}
-    for i in range(n_features):
-        if i == 0:
-            data[f'feature_{i}'] = base_feature
-        else:
-            # Create correlated features
-            correlation = np.random.uniform(-0.8, 0.8)
-            data[f'feature_{i}'] = correlation * base_feature + np.random.normal(0, 0.5, n_samples)
-    
-    df = pd.DataFrame(data)
-    
-    # Display dataset info
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Samples", len(df))
-    with col2:
-        st.metric("Original Features", len(df.columns))
-    with col3:
-        st.metric("Data Shape", f"{df.shape[0]} × {df.shape[1]}")
-    
-    # Correlation matrix
-    st.markdown("#### 📊 Feature Correlations")
-    
-    corr_matrix = df.corr()
-    fig = px.imshow(corr_matrix, 
-                    title="Feature Correlation Matrix",
-                    color_continuous_scale='RdBu')
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # PCA parameters
-    st.markdown("#### 🎯 PCA Parameters")
-    
-    n_components = st.slider("Number of Components", 2, min(8, len(df.columns)), 3)
-    
-    # Perform PCA
-    if st.button("Perform PCA"):
-        with st.spinner("Performing PCA..."):
-            # Standardize data
-            scaler = StandardScaler()
-            X_scaled = scaler.fit_transform(df)
-            
-            # Apply PCA
-            pca = PCA(n_components=n_components)
-            X_pca = pca.fit_transform(X_scaled)
-            
-            # Create PCA dataframe
-            pca_df = pd.DataFrame(X_pca, columns=[f'PC_{i+1}' for i in range(n_components)])
-            
-            # Display results
-            st.markdown("#### 📊 PCA Results")
-            
-            # Explained variance
-            explained_variance = pca.explained_variance_ratio_
-            cumulative_variance = np.cumsum(explained_variance)
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                fig = px.bar(x=[f'PC_{i+1}' for i in range(n_components)], 
-                           y=explained_variance,
-                           title="Explained Variance by Component")
-                st.plotly_chart(fig, use_container_width=True)
-            
-            with col2:
-                fig2 = px.line(x=[f'PC_{i+1}' for i in range(n_components)], 
-                             y=cumulative_variance,
-                             title="Cumulative Explained Variance")
-                fig2.add_hline(y=0.95, line_dash="dash", line_color="red", 
-                             annotation_text="95% Variance")
-                st.plotly_chart(fig2, use_container_width=True)
-            
-            # Component loadings
-            st.markdown("#### 📈 Component Loadings")
-            
-            loadings_df = pd.DataFrame(
-                pca.components_.T,
-                columns=[f'PC_{i+1}' for i in range(n_components)],
-                index=df.columns
-            )
-            
-            fig3 = px.imshow(loadings_df, 
-                           title="Component Loadings",
-                           color_continuous_scale='RdBu')
-            st.plotly_chart(fig3, use_container_width=True)
-            
-            # 2D visualization
-            st.markdown("#### 📊 2D Visualization")
-            
-            if n_components >= 2:
-                fig4 = px.scatter(x=pca_df['PC_1'], y=pca_df['PC_2'],
-                                title="Data Projected onto First Two Principal Components")
-                st.plotly_chart(fig4, use_container_width=True)
-            
-            # 3D visualization
-            if n_components >= 3:
-                st.markdown("#### 🌐 3D Visualization")
-                
-                fig5 = px.scatter_3d(pca_df, x='PC_1', y='PC_2', z='PC_3',
-                                   title="Data Projected onto First Three Principal Components")
-                st.plotly_chart(fig5, use_container_width=True)
-            
-            # Summary statistics
-            st.markdown("#### 📋 Summary Statistics")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Explained Variance:**")
-                for i, var in enumerate(explained_variance):
-                    st.write(f"PC_{i+1}: {var:.3f}")
-            
-            with col2:
-                st.markdown("**Cumulative Variance:**")
-                for i, var in enumerate(cumulative_variance):
-                    st.write(f"PC_{i+1}: {var:.3f}")
-
-def handle_model_comparison():
-    st.markdown("### 🔄 Model Comparison")
-    st.markdown("Compare different machine learning models on the same dataset.")
-    
-    # Load dataset
-    df = generate_ml_dataset(1000)
-    
-    # Prepare data
-    X = df[['age', 'income', 'education_years', 'credit_score']]
-    y = df['loan_approved']
-    
-    # Split data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Model selection
-    st.markdown("#### 🎯 Select Models to Compare")
-    
-    models_to_compare = st.multiselect(
-        "Choose Models",
-        ["Logistic Regression", "Random Forest", "Support Vector Machine", "Gradient Boosting"],
-        default=["Logistic Regression", "Random Forest"]
+    # Generate target (loan approval probability)
+    # Higher age, income, education, and credit score increase approval probability
+    approval_prob = (
+        0.3 + 
+        0.2 * (age - 35) / 12 + 
+        0.3 * (income - 50000) / 20000 + 
+        0.2 * (education_years - 14) / 3 + 
+        0.3 * (credit_score - 700) / 100
     )
     
-    # Model configurations
-    st.markdown("#### ⚙️ Model Configurations")
+    # Add some noise and ensure probabilities are between 0 and 1
+    approval_prob += np.random.normal(0, 0.1, samples)
+    approval_prob = np.clip(approval_prob, 0, 1)
     
-    model_configs = {}
+    # Generate binary target
+    loan_approved = (approval_prob > 0.5).astype(int)
     
-    if "Random Forest" in models_to_compare:
-        col1, col2 = st.columns(2)
-        with col1:
-            rf_n_estimators = st.slider("RF: Number of Trees", 10, 200, 100)
-        with col2:
-            rf_max_depth = st.slider("RF: Max Depth", 3, 20, 10)
-        model_configs["Random Forest"] = {"n_estimators": rf_n_estimators, "max_depth": rf_max_depth}
+    data = {
+        'age': age.round(1),
+        'income': income.round(0),
+        'education_years': education_years.round(1),
+        'credit_score': credit_score.round(0),
+        'approval_probability': approval_prob.round(3),
+        'loan_approved': loan_approved
+    }
     
-    if "Gradient Boosting" in models_to_compare:
-        col1, col2 = st.columns(2)
-        with col1:
-            gb_n_estimators = st.slider("GB: Number of Estimators", 10, 200, 100)
-        with col2:
-            gb_learning_rate = st.slider("GB: Learning Rate", 0.01, 0.3, 0.1)
-        model_configs["Gradient Boosting"] = {"n_estimators": gb_n_estimators, "learning_rate": gb_learning_rate}
-    
-    # Train and compare models
-    if st.button("Compare Models"):
-        with st.spinner("Training and comparing models..."):
-            from sklearn.svm import SVC
-            from sklearn.ensemble import GradientBoostingClassifier
-            
-            results = {}
-            
-            for model_name in models_to_compare:
-                if model_name == "Logistic Regression":
-                    model = LogisticRegression(random_state=42)
-                elif model_name == "Random Forest":
-                    config = model_configs.get(model_name, {})
-                    model = RandomForestClassifier(
-                        n_estimators=config.get("n_estimators", 100),
-                        max_depth=config.get("max_depth", 10),
-                        random_state=42
-                    )
-                elif model_name == "Support Vector Machine":
-                    model = SVC(probability=True, random_state=42)
-                elif model_name == "Gradient Boosting":
-                    config = model_configs.get(model_name, {})
-                    model = GradientBoostingClassifier(
-                        n_estimators=config.get("n_estimators", 100),
-                        learning_rate=config.get("learning_rate", 0.1),
-                        random_state=42
-                    )
-                
-                # Train model
-                model.fit(X_train, y_train)
-                
-                # Make predictions
-                y_pred = model.predict(X_test)
-                y_pred_proba = model.predict_proba(X_test)[:, 1]
-                
-                # Calculate metrics
-                accuracy = accuracy_score(y_test, y_pred)
-                
-                # Cross-validation score
-                cv_scores = cross_val_score(model, X_train, y_train, cv=5)
-                cv_mean = cv_scores.mean()
-                cv_std = cv_scores.std()
-                
-                results[model_name] = {
-                    'accuracy': accuracy,
-                    'cv_mean': cv_mean,
-                    'cv_std': cv_std,
-                    'predictions': y_pred,
-                    'probabilities': y_pred_proba
-                }
-            
-            # Display comparison results
-            st.markdown("#### 📊 Model Comparison Results")
-            
-            # Metrics comparison
-            metrics_df = pd.DataFrame({
-                'Model': list(results.keys()),
-                'Test Accuracy': [results[model]['accuracy'] for model in results.keys()],
-                'CV Mean': [results[model]['cv_mean'] for model in results.keys()],
-                'CV Std': [results[model]['cv_std'] for model in results.keys()]
-            })
-            
-            st.dataframe(metrics_df)
-            
-            # Visualization
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                fig = px.bar(metrics_df, x='Model', y='Test Accuracy',
-                           title="Test Accuracy Comparison")
-                st.plotly_chart(fig, use_container_width=True)
-            
-            with col2:
-                fig2 = px.bar(metrics_df, x='Model', y='CV Mean',
-                            title="Cross-validation Score Comparison",
-                            error_y='CV Std')
-                st.plotly_chart(fig2, use_container_width=True)
-            
-            # ROC curves
-            st.markdown("#### 📈 ROC Curves")
-            
-            from sklearn.metrics import roc_curve, auc
-            
-            fig3 = go.Figure()
-            
-            for model_name in results.keys():
-                fpr, tpr, _ = roc_curve(y_test, results[model_name]['probabilities'])
-                roc_auc = auc(fpr, tpr)
-                
-                fig3.add_trace(go.Scatter(
-                    x=fpr, y=tpr,
-                    name=f'{model_name} (AUC = {roc_auc:.3f})',
-                    mode='lines'
-                ))
-            
-            # Add diagonal line
-            fig3.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines',
-                                    name='Random Classifier', line=dict(dash='dash')))
-            
-            fig3.update_layout(
-                title="ROC Curves Comparison",
-                xaxis_title="False Positive Rate",
-                yaxis_title="True Positive Rate"
-            )
-            
-            st.plotly_chart(fig3, use_container_width=True)
-            
-            # Best model selection
-            best_model = max(results.keys(), key=lambda x: results[x]['accuracy'])
-            st.success(f"**Best Model:** {best_model} (Accuracy: {results[best_model]['accuracy']:.3f})")
+    return pd.DataFrame(data)
 
-if __name__ == "__main__":
-    main() 
+def generate_random_text(paragraphs=3):
+    """Generate random text for file upload demonstrations."""
+    lorem_ipsum = """
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
+    Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+    
+    Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, 
+    eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. 
+    Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+    
+    Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.
+    """
+    
+    sentences = lorem_ipsum.split('. ')
+    random_sentences = random.sample(sentences, min(paragraphs * 3, len(sentences)))
+    return '. '.join(random_sentences) + '.' 
 
 
-    -------------------------------------------------real_time--------------------------------------------------------------------
-    import streamlit as st
+
+
+
+
+
+
+------------------------app.py---------------------------------------------
+import streamlit as st
 import pandas as pd
 import numpy as np
+from datetime import datetime
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import time
-from datetime import datetime, timedelta
-import threading
-import queue
-from utils.api_client import fetch_weather_data, fetch_stock_data, fetch_news_data, fetch_covid_data, fetch_user_analytics
-from utils.data_generator import generate_time_series_data
 
 # Page configuration
-st.set_page_config(page_title="Real-time Data", page_icon="⏰", layout="wide")
+st.set_page_config(
+    page_title="Streamlit Demo Project",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS for better styling
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 3rem;
+        color: #1f77b4;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .feature-card {
+        background-color: #f0f2f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 0.5rem 0;
+        border-left: 4px solid #1f77b4;
+    }
+    .metric-card {
+        background-color: #ffffff;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e0e0e0;
+        text-align: center;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 def main():
-    st.title("⏰ Real-time Data & Live Updates")
-    st.markdown("Experience real-time data streaming and live updates with Streamlit.")
+    # Header
+    st.markdown('<h1 class="main-header">🚀 Streamlit Demo Project</h1>', unsafe_allow_html=True)
     
-    # Sidebar controls
-    st.sidebar.header("🎛️ Real-time Controls")
+    # Introduction
+    st.markdown("""
+    Welcome to a comprehensive demonstration of Streamlit's capabilities! This project showcases various features 
+    and best practices for building interactive data applications.
+    """)
     
-    # Data source selection
-    data_source = st.sidebar.selectbox(
-        "Select Data Source",
-        ["Time Series", "Weather Data", "Stock Data", "News Feed", "COVID Data", "User Analytics", "Custom Stream"]
-    )
-    
-    # Update frequency
-    update_freq = st.sidebar.slider("Update Frequency (seconds)", 1, 30, 5)
-    
-    # Auto-refresh toggle
-    auto_refresh = st.sidebar.checkbox("Enable Auto-refresh", value=True)
-    
-    # Manual refresh button
-    if st.sidebar.button("🔄 Manual Refresh"):
-        st.rerun()
-    
-    # Initialize session state for real-time data
-    if 'real_time_data' not in st.session_state:
-        st.session_state.real_time_data = {}
-    if 'last_update' not in st.session_state:
-        st.session_state.last_update = datetime.now()
-    
-    # Main content area
-    if data_source == "Time Series":
-        handle_time_series_data(update_freq, auto_refresh)
-    elif data_source == "Weather Data":
-        handle_weather_data(update_freq, auto_refresh)
-    elif data_source == "Stock Data":
-        handle_stock_data(update_freq, auto_refresh)
-    elif data_source == "News Feed":
-        handle_news_feed(update_freq, auto_refresh)
-    elif data_source == "COVID Data":
-        handle_covid_data(update_freq, auto_refresh)
-    elif data_source == "User Analytics":
-        handle_user_analytics(update_freq, auto_refresh)
-    elif data_source == "Custom Stream":
-        handle_custom_stream(update_freq, auto_refresh)
-
-def handle_time_series_data(update_freq, auto_refresh):
-    st.markdown("### 📈 Real-time Time Series Data")
-    
-    # Generate initial data
-    if 'time_series_data' not in st.session_state:
-        st.session_state.time_series_data = generate_time_series_data(100)
-    
-    # Display current data
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        current_value = st.session_state.time_series_data['value'].iloc[-1]
-        st.metric("Current Value", f"{current_value:.2f}", 
-                 delta=f"{current_value - st.session_state.time_series_data['value'].iloc[-2]:.2f}")
-    
-    with col2:
-        moving_avg = st.session_state.time_series_data['moving_average'].iloc[-1]
-        st.metric("Moving Average", f"{moving_avg:.2f}")
-    
-    with col3:
-        volatility = st.session_state.time_series_data['volatility'].iloc[-1]
-        st.metric("Volatility", f"{volatility:.2f}")
-    
-    # Create real-time chart
-    fig = go.Figure()
-    
-    # Add main time series
-    fig.add_trace(go.Scatter(
-        x=st.session_state.time_series_data['timestamp'],
-        y=st.session_state.time_series_data['value'],
-        mode='lines+markers',
-        name='Value',
-        line=dict(color='blue', width=2)
-    ))
-    
-    # Add moving average
-    fig.add_trace(go.Scatter(
-        x=st.session_state.time_series_data['timestamp'],
-        y=st.session_state.time_series_data['moving_average'],
-        mode='lines',
-        name='Moving Average',
-        line=dict(color='red', width=2, dash='dash')
-    ))
-    
-    fig.update_layout(
-        title="Real-time Time Series Data",
-        xaxis_title="Time",
-        yaxis_title="Value",
-        height=500,
-        showlegend=True
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Data table
-    st.markdown("#### 📊 Recent Data Points")
-    recent_data = st.session_state.time_series_data.tail(10)
-    st.dataframe(recent_data)
-    
-    # Update data if auto-refresh is enabled
-    if auto_refresh:
-        time_since_update = (datetime.now() - st.session_state.last_update).total_seconds()
-        if time_since_update >= update_freq:
-            # Add new data point
-            new_timestamp = st.session_state.time_series_data['timestamp'].iloc[-1] + timedelta(minutes=15)
-            new_value = st.session_state.time_series_data['value'].iloc[-1] + np.random.normal(0, 2)
-            
-            new_row = pd.DataFrame({
-                'timestamp': [new_timestamp],
-                'value': [new_value],
-                'moving_average': [st.session_state.time_series_data['value'].rolling(window=5).mean().iloc[-1]],
-                'volatility': [np.random.exponential(2)]
-            })
-            
-            st.session_state.time_series_data = pd.concat([st.session_state.time_series_data, new_row], ignore_index=True)
-            st.session_state.last_update = datetime.now()
-            
-            # Keep only last 100 points
-            if len(st.session_state.time_series_data) > 100:
-                st.session_state.time_series_data = st.session_state.time_series_data.tail(100)
-            
-            st.rerun()
-
-def handle_weather_data(update_freq, auto_refresh):
-    st.markdown("### 🌤️ Real-time Weather Data")
-    
-    # City selection
-    cities = ["London", "New York", "Tokyo", "Sydney", "Paris"]
-    selected_city = st.selectbox("Select City", cities)
-    
-    # Fetch weather data
-    weather_data = fetch_weather_data(selected_city)
-    
-    if weather_data:
-        # Display weather metrics
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric("Temperature", f"{weather_data['temp']}°C")
-        
-        with col2:
-            st.metric("Humidity", f"{weather_data['humidity']}%")
-        
-        with col3:
-            st.metric("Condition", weather_data['description'])
-        
-        # Weather visualization
-        st.markdown("#### 📊 Weather Dashboard")
-        
-        # Create weather chart
-        fig = go.Figure()
-        
-        # Temperature gauge
-        fig.add_trace(go.Indicator(
-            mode="gauge+number+delta",
-            value=weather_data['temp'],
-            domain={'x': [0, 1], 'y': [0, 1]},
-            title={'text': "Temperature (°C)"},
-            delta={'reference': 20},
-            gauge={
-                'axis': {'range': [None, 40]},
-                'bar': {'color': "darkblue"},
-                'steps': [
-                    {'range': [0, 10], 'color': "lightgray"},
-                    {'range': [10, 20], 'color': "yellow"},
-                    {'range': [20, 30], 'color': "orange"},
-                    {'range': [30, 40], 'color': "red"}
-                ],
-                'threshold': {
-                    'line': {'color': "red", 'width': 4},
-                    'thickness': 0.75,
-                    'value': 35
-                }
-            }
-        ))
-        
-        fig.update_layout(height=400)
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Multi-city comparison
-        st.markdown("#### 🌍 Multi-city Weather Comparison")
-        
-        all_weather = {}
-        for city in cities:
-            all_weather[city] = fetch_weather_data(city)
-        
-        weather_df = pd.DataFrame(all_weather).T
-        weather_df.columns = ['Temperature', 'Humidity', 'Condition']
-        
-        fig2 = px.bar(weather_df, x=weather_df.index, y='Temperature',
-                     title="Temperature Comparison Across Cities",
-                     color='Temperature',
-                     color_continuous_scale='RdYlBu_r')
-        fig2.update_layout(height=400)
-        st.plotly_chart(fig2, use_container_width=True)
-        
-        # Weather data table
-        st.markdown("#### 📋 Weather Data Table")
-        st.dataframe(weather_df)
-
-def handle_stock_data(update_freq, auto_refresh):
-    st.markdown("### 📈 Real-time Stock Data")
-    
-    # Stock symbol selection
-    symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA"]
-    selected_symbol = st.sidebar.selectbox("Select Stock Symbol", symbols)
-    
-    # Fetch stock data
-    stock_data = fetch_stock_data(selected_symbol, days=30)
-    
-    if stock_data is not None:
-        # Display stock metrics
-        col1, col2, col3, col4 = st.columns(4)
-        
-        current_price = stock_data['close'].iloc[-1]
-        prev_price = stock_data['close'].iloc[-2]
-        price_change = current_price - prev_price
-        price_change_pct = (price_change / prev_price) * 100
-        
-        with col1:
-            st.metric("Current Price", f"${current_price:.2f}", 
-                     delta=f"{price_change:.2f} ({price_change_pct:.2f}%)")
-        
-        with col2:
-            st.metric("Volume", f"{stock_data['volume'].iloc[-1]:,}")
-        
-        with col3:
-            st.metric("High", f"${stock_data['high'].iloc[-1]:.2f}")
-        
-        with col4:
-            st.metric("Low", f"${stock_data['low'].iloc[-1]:.2f}")
-        
-        # Stock price chart
-        st.markdown("#### 📊 Stock Price Chart")
-        
-        fig = go.Figure()
-        
-        # Candlestick chart
-        fig.add_trace(go.Candlestick(
-            x=stock_data['date'],
-            open=stock_data['open'],
-            high=stock_data['high'],
-            low=stock_data['low'],
-            close=stock_data['close'],
-            name=selected_symbol
-        ))
-        
-        fig.update_layout(
-            title=f"{selected_symbol} Stock Price",
-            xaxis_title="Date",
-            yaxis_title="Price ($)",
-            height=500
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Volume chart
-        st.markdown("#### 📊 Trading Volume")
-        
-        fig2 = px.bar(stock_data, x='date', y='volume',
-                     title=f"{selected_symbol} Trading Volume")
-        fig2.update_layout(height=400)
-        st.plotly_chart(fig2, use_container_width=True)
-        
-        # Price statistics
-        st.markdown("#### 📈 Price Statistics")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("**Price Statistics:**")
-            st.write(f"Average Price: ${stock_data['close'].mean():.2f}")
-            st.write(f"Price Range: ${stock_data['close'].min():.2f} - ${stock_data['close'].max():.2f}")
-            st.write(f"Price Volatility: {stock_data['close'].std():.2f}")
-        
-        with col2:
-            st.markdown("**Volume Statistics:**")
-            st.write(f"Average Volume: {stock_data['volume'].mean():,.0f}")
-            st.write(f"Total Volume: {stock_data['volume'].sum():,.0f}")
-            st.write(f"Max Volume: {stock_data['volume'].max():,.0f}")
-
-def handle_news_feed(update_freq, auto_refresh):
-    st.markdown("### 📰 Real-time News Feed")
-    
-    # News category selection
-    categories = ["technology", "business", "science"]
-    selected_category = st.sidebar.selectbox("Select News Category", categories)
-    
-    # Fetch news data
-    news_data = fetch_news_data(selected_category, limit=10)
-    
-    if news_data is not None:
-        # Display news feed
-        st.markdown("#### 📰 Latest News")
-        
-        for idx, row in news_data.iterrows():
-            with st.container():
-                st.markdown(f"**{row['title']}**")
-                st.markdown(f"*{row['source']} - {row['published_at'].strftime('%Y-%m-%d %H:%M')}*")
-                st.markdown(f"{row['summary']}")
-                st.markdown(f"[Read More]({row['url']})")
-                st.markdown("---")
-        
-        # News analytics
-        st.markdown("#### 📊 News Analytics")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Source distribution
-            source_counts = news_data['source'].value_counts()
-            fig = px.pie(values=source_counts.values, names=source_counts.index,
-                        title="News by Source")
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            # Publication time distribution
-            news_data['hour'] = news_data['published_at'].dt.hour
-            hour_counts = news_data['hour'].value_counts().sort_index()
-            fig2 = px.bar(x=hour_counts.index, y=hour_counts.values,
-                         title="News Publication by Hour")
-            fig2.update_layout(xaxis_title="Hour", yaxis_title="Number of Articles")
-            st.plotly_chart(fig2, use_container_width=True)
-
-def handle_covid_data(update_freq, auto_refresh):
-    st.markdown("### 🦠 Real-time COVID-19 Data")
-    
-    # Country selection
-    countries = ["US", "UK", "India", "Brazil", "France"]
-    selected_country = st.sidebar.selectbox("Select Country", countries)
-    
-    # Fetch COVID data
-    covid_data = fetch_covid_data(selected_country)
-    
-    if covid_data is not None:
-        # Display COVID metrics
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.metric("New Cases", f"{covid_data['new_cases'].iloc[-1]:,}")
-        
-        with col2:
-            st.metric("New Deaths", f"{covid_data['new_deaths'].iloc[-1]:,}")
-        
-        with col3:
-            st.metric("Total Cases", f"{covid_data['total_cases'].iloc[-1]:,}")
-        
-        with col4:
-            st.metric("Total Deaths", f"{covid_data['total_deaths'].iloc[-1]:,}")
-        
-        # COVID trends chart
-        st.markdown("#### 📊 COVID-19 Trends")
-        
-        fig = make_subplots(
-            rows=2, cols=1,
-            subplot_titles=('Daily New Cases', 'Daily New Deaths'),
-            vertical_spacing=0.1
-        )
-        
-        fig.add_trace(
-            go.Scatter(x=covid_data['date'], y=covid_data['new_cases'],
-                      mode='lines', name='New Cases'),
-            row=1, col=1
-        )
-        
-        fig.add_trace(
-            go.Scatter(x=covid_data['date'], y=covid_data['new_deaths'],
-                      mode='lines', name='New Deaths'),
-            row=2, col=1
-        )
-        
-        fig.update_layout(height=600, title_text=f"COVID-19 Data for {selected_country}")
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Recovery rate
-        st.markdown("#### 📈 Recovery Analysis")
-        
-        covid_data['recovery_rate'] = (covid_data['total_recovered'] / covid_data['total_cases']) * 100
-        covid_data['death_rate'] = (covid_data['total_deaths'] / covid_data['total_cases']) * 100
-        
-        fig2 = go.Figure()
-        fig2.add_trace(go.Scatter(x=covid_data['date'], y=covid_data['recovery_rate'],
-                                 mode='lines', name='Recovery Rate (%)'))
-        fig2.add_trace(go.Scatter(x=covid_data['date'], y=covid_data['death_rate'],
-                                 mode='lines', name='Death Rate (%)'))
-        
-        fig2.update_layout(title="Recovery vs Death Rate", height=400)
-        st.plotly_chart(fig2, use_container_width=True)
-
-def handle_user_analytics(update_freq, auto_refresh):
-    st.markdown("### 👥 Real-time User Analytics")
-    
-    # Fetch user analytics
-    analytics = fetch_user_analytics()
-    
-    if analytics:
-        # Display key metrics
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.metric("Total Users", f"{analytics['total_users']:,}")
-        
-        with col2:
-            st.metric("Active Users", f"{analytics['active_users']:,}")
-        
-        with col3:
-            st.metric("New Signups", f"{analytics['new_signups']:,}")
-        
-        with col4:
-            st.metric("Page Views", f"{analytics['page_views']:,}")
-        
-        # Additional metrics
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric("Avg Session Duration", f"{analytics['avg_session_duration']}s")
-        
-        with col2:
-            st.metric("Bounce Rate", f"{analytics['bounce_rate']:.1%}")
-        
-        with col3:
-            st.metric("Conversion Rate", f"{analytics['conversion_rate']:.2%}")
-        
-        # Analytics dashboard
-        st.markdown("#### 📊 Analytics Dashboard")
-        
-        # Create metrics visualization
-        metrics_data = {
-            'Metric': ['Total Users', 'Active Users', 'New Signups', 'Page Views'],
-            'Value': [analytics['total_users'], analytics['active_users'], 
-                     analytics['new_signups'], analytics['page_views']]
-        }
-        
-        fig = px.bar(metrics_data, x='Metric', y='Value',
-                    title="User Analytics Overview")
-        fig.update_layout(height=400)
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Performance metrics
-        st.markdown("#### ⚡ Performance Metrics")
-        
-        performance_data = {
-            'Metric': ['Session Duration', 'Bounce Rate', 'Conversion Rate'],
-            'Value': [analytics['avg_session_duration'], 
-                     analytics['bounce_rate'] * 100, 
-                     analytics['conversion_rate'] * 100],
-            'Unit': ['seconds', '%', '%']
-        }
-        
-        perf_df = pd.DataFrame(performance_data)
-        
-        fig2 = px.bar(perf_df, x='Metric', y='Value',
-                     title="Performance Metrics")
-        fig2.update_layout(height=400)
-        st.plotly_chart(fig2, use_container_width=True)
-
-def handle_custom_stream(update_freq, auto_refresh):
-    st.markdown("### 🔄 Custom Data Stream")
-    
-    # Custom stream configuration
-    st.markdown("#### ⚙️ Stream Configuration")
-    
+    # Feature overview
     col1, col2 = st.columns(2)
     
     with col1:
-        stream_type = st.selectbox("Stream Type", ["Random Numbers", "Sine Wave", "Exponential Growth", "Random Walk"])
-        data_points = st.slider("Number of Data Points", 10, 100, 50)
+        st.markdown("### 📊 Core Features")
+        st.markdown("""
+        <div class="feature-card">
+            <strong>Interactive Data Visualization</strong><br>
+            Charts, graphs, and real-time updates
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="feature-card">
+            <strong>File Upload & Processing</strong><br>
+            CSV, image, and text file handling
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="feature-card">
+            <strong>Real-time Data</strong><br>
+            Live data fetching and updates
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="feature-card">
+            <strong>Session State Management</strong><br>
+            Persistent data across interactions
+        </div>
+        """, unsafe_allow_html=True)
     
     with col2:
-        update_interval = st.slider("Update Interval (ms)", 100, 2000, 500)
-        noise_level = st.slider("Noise Level", 0.0, 1.0, 0.1)
+        st.markdown("### ⚡ Advanced Features")
+        st.markdown("""
+        <div class="feature-card">
+            <strong>Caching & Performance</strong><br>
+            Optimization with @st.cache_data
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="feature-card">
+            <strong>Custom Components</strong><br>
+            Reusable UI components
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="feature-card">
+            <strong>API Integration</strong><br>
+            External data fetching
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="feature-card">
+            <strong>Machine Learning</strong><br>
+            Simple ML model demonstration
+        </div>
+        """, unsafe_allow_html=True)
     
-    # Initialize custom data
-    if 'custom_stream_data' not in st.session_state:
-        st.session_state.custom_stream_data = []
-        st.session_state.custom_stream_time = []
+    # Quick demo section
+    st.markdown("---")
+    st.markdown("### 🎯 Quick Demo")
     
-    # Generate custom data
-    if stream_type == "Random Numbers":
-        new_value = np.random.normal(0, 1)
-    elif stream_type == "Sine Wave":
-        time_point = len(st.session_state.custom_stream_data) * 0.1
-        new_value = np.sin(time_point) + np.random.normal(0, noise_level)
-    elif stream_type == "Exponential Growth":
-        time_point = len(st.session_state.custom_stream_data) * 0.1
-        new_value = np.exp(time_point * 0.1) + np.random.normal(0, noise_level)
-    elif stream_type == "Random Walk":
-        if len(st.session_state.custom_stream_data) == 0:
-            new_value = 0
-        else:
-            new_value = st.session_state.custom_stream_data[-1] + np.random.normal(0, 0.1)
-    
-    # Add new data point
-    st.session_state.custom_stream_data.append(new_value)
-    st.session_state.custom_stream_time.append(datetime.now())
-    
-    # Keep only recent data points
-    if len(st.session_state.custom_stream_data) > data_points:
-        st.session_state.custom_stream_data = st.session_state.custom_stream_data[-data_points:]
-        st.session_state.custom_stream_time = st.session_state.custom_stream_time[-data_points:]
-    
-    # Display current value
-    st.markdown("#### 📊 Current Value")
-    current_value = st.session_state.custom_stream_data[-1]
-    st.metric("Current Value", f"{current_value:.4f}")
-    
-    # Create real-time chart
-    st.markdown("#### 📈 Real-time Chart")
-    
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=st.session_state.custom_stream_time,
-        y=st.session_state.custom_stream_data,
-        mode='lines+markers',
-        name=stream_type,
-        line=dict(color='green', width=2)
-    ))
-    
-    fig.update_layout(
-        title=f"Real-time {stream_type} Stream",
-        xaxis_title="Time",
-        yaxis_title="Value",
-        height=500
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Data table
-    st.markdown("#### 📋 Recent Data Points")
-    recent_data = pd.DataFrame({
-        'Time': st.session_state.custom_stream_time[-10:],
-        'Value': st.session_state.custom_stream_data[-10:]
-    })
-    st.dataframe(recent_data)
-    
-    # Statistics
-    st.markdown("#### 📊 Stream Statistics")
-    
+    # Interactive elements demo
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.metric("Mean", f"{np.mean(st.session_state.custom_stream_data):.4f}")
+        st.markdown("#### Interactive Controls")
+        slider_value = st.slider("Select a value", 0, 100, 50)
+        checkbox_value = st.checkbox("Enable feature")
+        select_value = st.selectbox("Choose an option", ["Option A", "Option B", "Option C"])
     
     with col2:
-        st.metric("Std Dev", f"{np.std(st.session_state.custom_stream_data):.4f}")
+        st.markdown("#### Real-time Metrics")
+        st.metric("Current Value", slider_value, delta=slider_value - 50)
+        st.metric("Feature Status", "Active" if checkbox_value else "Inactive")
+        st.metric("Selected Option", select_value)
     
     with col3:
-        st.metric("Data Points", len(st.session_state.custom_stream_data))
+        st.markdown("#### Sample Chart")
+        # Generate sample data
+        data = pd.DataFrame({
+            'x': np.linspace(0, 10, 100),
+            'y': np.sin(np.linspace(0, 10, 100)) * slider_value / 100
+        })
+        
+        fig = px.line(data, x='x', y='y', title="Interactive Sine Wave")
+        fig.update_layout(height=200)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Session state demo
+    st.markdown("---")
+    st.markdown("### 💾 Session State Demo")
+    
+    if 'counter' not in st.session_state:
+        st.session_state.counter = 0
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown(f"**Counter Value:** {st.session_state.counter}")
+        
+        if st.button("Increment Counter"):
+            st.session_state.counter += 1
+            st.rerun()
+        
+        if st.button("Reset Counter"):
+            st.session_state.counter = 0
+            st.rerun()
+    
+    # Navigation guide
+    st.markdown("---")
+    st.markdown("### 🧭 Navigation Guide")
+    
+    st.markdown("""
+    Use the sidebar to navigate through different pages:
+    
+    - **📈 Data Visualization**: Interactive charts and graphs
+    - **📁 File Upload**: File processing and analysis
+    - **⏰ Real-time Data**: Live data updates and streaming
+    - **🤖 Machine Learning**: ML model demonstrations
+    - **🧩 Custom Components**: Reusable UI components
+    """)
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style='text-align: center; color: #666;'>
+        Built with ❤️ using Streamlit | 
+        <a href='https://streamlit.io' target='_blank'>Learn More</a>
+    </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main() 
+
